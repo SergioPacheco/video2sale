@@ -240,17 +240,17 @@ onMounted(async () => {
         <StepPanel v-slot="{ activateCallback }" value="2">
           <div class="p-4">
             <p class="text-gray-600 mb-4">Genera 3 variaciones de roteiro creativo.</p>
+            <!-- Preview -->
+            <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
+              <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
+            </div>
             <div class="flex gap-4 items-end mb-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Prompt Template</label>
                 <Select v-model="selectedScriptPromptId" :options="scriptPrompts" optionLabel="name" optionValue="id" placeholder="Default (archivo .md)" showClear class="w-64" />
               </div>
               <Button label="Generar Roteiros" icon="pi pi-sparkles" :loading="loading" @click="generateCreative(); activateCallback('3')" />
-            </div>
-            <!-- Preview -->
-            <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
-              <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
             </div>
             <DataTable v-if="creativePacks.length" :value="creativePacks" size="small">
               <Column field="version" header="V" style="width: 3rem" />
@@ -318,6 +318,11 @@ onMounted(async () => {
         <StepPanel v-slot="{ activateCallback }" value="6">
           <div class="p-4">
             <p class="text-gray-600 mb-4">Genera prompts para el renderer de vídeo.</p>
+            <!-- Preview -->
+            <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
+              <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
+            </div>
             <div class="flex gap-4 items-end mb-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Renderer</label>
@@ -328,11 +333,6 @@ onMounted(async () => {
                 <Select v-model="selectedRendererPromptId" :options="rendererPrompts" optionLabel="name" optionValue="id" placeholder="Default" showClear class="w-64" />
               </div>
               <Button label="Generar Prompts" icon="pi pi-video" :loading="loading" @click="generatePrompts(); activateCallback('7')" />
-            </div>
-            <!-- Preview -->
-            <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
-              <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
             </div>
             <div v-if="promptsResult" class="space-y-2">
               <div v-for="(p, i) in promptsResult.prompts" :key="i" class="bg-gray-50 border rounded p-3">
