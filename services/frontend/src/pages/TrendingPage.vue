@@ -4,6 +4,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
+import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
 import api from '../services/api'
 
@@ -14,6 +15,11 @@ const importing = ref(false)
 const country = ref('ES')
 const period = ref(7)
 const importResult = ref<any>(null)
+
+// Detail modal
+const detailVisible = ref(false)
+const detail = ref<any>(null)
+const detailLoading = ref(false)
 
 const countryOptions = [
   { label: '🇪🇸 España', value: 'ES' },
@@ -39,6 +45,17 @@ async function loadTrending() {
   loading.value = false
 }
 
+async function openDetail(product: any) {
+  detailLoading.value = true
+  detailVisible.value = true
+  detail.value = null
+  const { data } = await api.get(`/tiktok-trending/detail/${product.category_id}`, {
+    params: { name: product.name, country: country.value, period: period.value }
+  })
+  detail.value = data
+  detailLoading.value = false
+}
+
 async function importSelected() {
   if (!selected.value.length) return
   importing.value = true
@@ -58,7 +75,7 @@ onMounted(loadTrending)
     <div class="flex justify-between items-center mb-6">
       <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">🔥 TikTok Trending</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Produtos trending do TikTok Creative Center (dados públicos e gratuitos)</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Produtos trending do TikTok Creative Center — dados públicos e gratuitos</p>
       </div>
     </div>
 
@@ -103,15 +120,70 @@ onMounted(loadTrending)
       <Column field="cvr" header="CVR" sortable style="width: 4rem">
         <template #body="{ data }">{{ data.cvr }}%</template>
       </Column>
-      <Column field="likes" header="Likes" sortable style="width: 5rem">
-        <template #body="{ data }">{{ (data.likes / 1000).toFixed(0) }}K</template>
-      </Column>
       <Column field="impressions" header="Impressões" sortable style="width: 6rem">
         <template #body="{ data }">{{ (data.impressions / 1000000).toFixed(0) }}M</template>
       </Column>
-      <Column field="view_rate_6s" header="6s View" sortable style="width: 5rem">
-        <template #body="{ data }">{{ data.view_rate_6s }}%</template>
+      <Column header="" style="width: 5rem">
+        <template #body="{ data }">
+          <Button icon="pi pi-info-circle" size="small" text @click="openDetail(data)" />
+        </template>
       </Column>
     </DataTable>
+
+    <!-- Modal de Detalhe -->
+    <Dialog v-model:visible="detailVisible" :header="detail?.name || 'Cargando...'" modal style="width: 55rem">
+      <div v-if="detailLoading" class="text-center py-8 text-gray-400">Cargando detalles...</div>
+      <div v-else-if="detail" class="space-y-5">
+        <!-- Métricas -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-500">CTR</p>
+            <p class="text-xl font-bold">{{ detail.metrics.ctr }}%</p>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-500">CVR</p>
+            <p class="text-xl font-bold">{{ detail.metrics.cvr }}%</p>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-500">CPA</p>
+            <p class="text-xl font-bold">${{ detail.metrics.cpa }}</p>
+          </div>
+        </div>
+
+        <!-- Hashtags -->
+        <div v-if="detail.hashtags.length">
+          <h4 class="text-sm font-semibold mb-2">🏷️ Hashtags populares</h4>
+          <div class="flex flex-wrap gap-2">
+            <Tag v-for="h in detail.hashtags" :key="h" :value="'#' + h" />
+          </div>
+        </div>
+
+        <!-- Audience -->
+        <div v-if="detail.audience_ages.length">
+          <h4 class="text-sm font-semibold mb-2">👥 Audiencia por edad</h4>
+          <div class="flex gap-3">
+            <div v-for="age in detail.audience_ages" :key="age.ageLevel" class="text-center">
+              <div class="bg-blue-100 dark:bg-blue-900 rounded h-16 w-10 flex items-end justify-center overflow-hidden">
+                <div class="bg-blue-500 w-full" :style="{ height: age.score + '%' }"></div>
+              </div>
+              <p class="text-xs mt-1">{{ age.ageLevel }}+</p>
+              <p class="text-xs text-gray-500">{{ age.score }}%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vídeos -->
+        <div v-if="detail.videos.length">
+          <h4 class="text-sm font-semibold mb-2">🎬 Vídeos de ejemplo ({{ detail.videos.length }})</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <a v-for="v in detail.videos" :key="v.id" :href="v.url" target="_blank"
+               class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
+              <span class="pi pi-external-link text-blue-500"></span>
+              <span class="text-sm text-blue-600 dark:text-blue-400 font-mono truncate">{{ v.id }}</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>
