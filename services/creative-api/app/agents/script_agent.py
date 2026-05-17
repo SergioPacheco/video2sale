@@ -35,6 +35,7 @@ async def generate_creative_packs(product, video, custom_prompt=None) -> list[di
     user_prompt = (
         f"Producto: {product.name}\n"
         f"Categoría: {product.category}\n"
+        f"Descripción: {product.notes or product.name}\n"
         f"Público: Personas en España que buscan soluciones prácticas\n"
         f"Dolor principal: Problema que resuelve este producto en el día a día\n"
         f"Beneficios permitidos: Solo los que se pueden demostrar visualmente\n"

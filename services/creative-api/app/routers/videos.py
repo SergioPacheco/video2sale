@@ -90,15 +90,19 @@ async def generate_creative(video_id: int, prompt_id: int | None = None, db: Ses
 
     product = db.query(Product).filter(Product.id == video.product_id).first()
 
-    # Buscar template customizado se fornecido
+    # Buscar template: se prompt_id fornecido usa esse, senão busca o primeiro script_agent ativo
+    from app.models import PromptTemplate
     custom_prompt = None
     if prompt_id:
-        from app.models import PromptTemplate
         custom_prompt = db.query(PromptTemplate).filter(
             PromptTemplate.id == prompt_id, PromptTemplate.active == True
         ).first()
         if not custom_prompt:
             raise HTTPException(status_code=404, detail="Prompt template não encontrado")
+    else:
+        custom_prompt = db.query(PromptTemplate).filter(
+            PromptTemplate.type == "script_agent", PromptTemplate.active == True
+        ).first()
 
     packs = await generate_creative_packs(product, video, custom_prompt=custom_prompt)
 
@@ -136,8 +140,14 @@ async def compliance_check(video_id: int, db: Session = Depends(get_db)):
     if not packs:
         raise HTTPException(status_code=404, detail="Nenhum creative pack encontrado")
 
+    # Buscar prompt de compliance do banco
+    from app.models import PromptTemplate
+    compliance_prompt = db.query(PromptTemplate).filter(
+        PromptTemplate.type == "compliance", PromptTemplate.active == True
+    ).first()
+
     for pack in packs:
-        result = await check_compliance(pack)
+        result = await check_compliance(pack, custom_prompt=compliance_prompt)
         pack.compliance_status = result["status"]
         pack.compliance_notes = result.get("notes", "")
         if result.get("fixed_scenes"):

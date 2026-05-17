@@ -12,9 +12,12 @@ def _get_client():
     return AsyncOpenAI(api_key=settings.openai_api_key, timeout=120)
 
 
-async def check_compliance(pack) -> dict:
+async def check_compliance(pack, custom_prompt=None) -> dict:
     """Valida um creative pack contra regras de compliance."""
-    system_prompt = PROMPT_PATH.read_text()
+    if custom_prompt:
+        system_prompt = custom_prompt.content
+    else:
+        system_prompt = PROMPT_PATH.read_text()
 
     user_prompt = json.dumps({
         "hook": pack.hook,
