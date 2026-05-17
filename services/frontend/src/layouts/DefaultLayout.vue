@@ -1,39 +1,47 @@
 <script setup lang="ts">
-import { Package, Video, Trophy, BarChart3, Wand2, Settings } from 'lucide-vue-next'
+import { Package, Video, Trophy, BarChart3, Wand2, Settings, Moon, Sun } from 'lucide-vue-next'
+import { useDarkMode } from '../composables/useDarkMode'
+
+const { isDark, toggle } = useDarkMode()
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-50">
+  <div class="flex h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div class="p-6 border-b border-gray-200">
-        <h1 class="text-xl font-bold text-gray-900">Video2Sale</h1>
-        <p class="text-sm text-gray-500">Fábrica de conteúdo</p>
+    <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Video2Sale</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Fábrica de conteúdo</p>
       </div>
       <nav class="flex-1 p-4 space-y-1">
-        <RouterLink to="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+        <RouterLink to="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <BarChart3 :size="20" />
           <span>Dashboard</span>
         </RouterLink>
-        <RouterLink to="/workflow" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+        <RouterLink to="/workflow" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Wand2 :size="20" />
           <span>Workflow</span>
         </RouterLink>
-        <RouterLink to="/products" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+        <RouterLink to="/products" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Package :size="20" />
           <span>Productos</span>
         </RouterLink>
-        <RouterLink to="/ranking" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+        <RouterLink to="/ranking" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Trophy :size="20" />
           <span>Ranking</span>
         </RouterLink>
-        <RouterLink to="/videos" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+        <RouterLink to="/videos" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Video :size="20" />
           <span>Vídeos</span>
         </RouterLink>
       </nav>
-      <div class="p-4 border-t border-gray-200">
-        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+      <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
+        <button @click="toggle" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
+          <Sun v-if="isDark" :size="20" />
+          <Moon v-else :size="20" />
+          <span>{{ isDark ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+        </button>
+        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Settings :size="20" />
           <span>Configuración</span>
         </RouterLink>
