@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Package, Video, Trophy, BarChart3, Wand2, FileText } from 'lucide-vue-next'
+import { Package, Video, Trophy, BarChart3, Wand2, Settings } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -31,11 +31,13 @@ import { Package, Video, Trophy, BarChart3, Wand2, FileText } from 'lucide-vue-n
           <Video :size="20" />
           <span>Vídeos</span>
         </RouterLink>
-        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-          <FileText :size="20" />
-          <span>Prompts</span>
-        </RouterLink>
       </nav>
+      <div class="p-4 border-t border-gray-200">
+        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+          <Settings :size="20" />
+          <span>Configuración</span>
+        </RouterLink>
+      </div>
     </aside>
 
     <!-- Main content -->

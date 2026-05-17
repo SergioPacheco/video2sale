@@ -303,3 +303,22 @@ def get_video(video_id: int, db: Session = Depends(get_db)):
     if not video:
         raise HTTPException(status_code=404, detail="Vídeo não encontrado")
     return video
+
+
+# === T11: Publish ===
+
+@router.post("/videos/{video_id}/publish")
+def publish_video(video_id: int, platform: str = "tiktok", metrics: dict | None = None, db: Session = Depends(get_db)):
+    """Marca vídeo como publicado e registra métricas iniciais."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vídeo não encontrado")
+
+    video.status = "published"
+    db.add(VideoEvent(
+        video_id=video_id, event_type="published", actor="human",
+        details={"platform": platform, "metrics": metrics or {}},
+    ))
+    db.commit()
+
+    return {"status": "ok", "video_id": video_id, "platform": platform}
