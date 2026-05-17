@@ -17,33 +17,28 @@ import api from '../services/api'
 // === State ===
 const products = ref<any[]>([])
 const selectedRow = ref<any>(null)
-const selectedProduct = computed(() => selectedRow.value)
 const filters = ref({ global: { value: null, matchMode: FilterMatchMode.CONTAINS } })
-const winner = ref<any>(null)
 const video = ref<any>(null)
 const creativePacks = ref<any[]>([])
 const selectedPackId = ref<number | null>(null)
-const ttsResult = ref<any>(null)
-const promptsResult = ref<any>(null)
-const published = ref(false)
+const selectedPack = computed(() => creativePacks.value.find(p => p.selected))
 const loading = ref(false)
 
 // Prompt selection + preview
 const scriptPrompts = ref<any[]>([])
-const rendererPrompts = ref<any[]>([])
 const selectedScriptPromptId = ref<number | null>(null)
-const selectedRendererPromptId = ref<number | null>(null)
-const renderer = ref('seedance')
 const showPreview = ref(false)
 const previewContent = ref('')
 
-// Publish
-const tiktokUrl = ref('')
+// Logs
+const logs = ref<{time: string; msg: string; type: string}[]>([])
+function addLog(msg: string, type = 'info') {
+  const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  logs.value.push({ time, msg, type })
+}
 
-const rendererOptions = [
-  { label: 'Seedance', value: 'seedance' },
-  { label: 'Runway', value: 'runway' },
-]
+const activeStep = ref('1')
+function advance(step: string) { activeStep.value = step }
 
 const week = computed(() => {
   const now = new Date()
@@ -52,45 +47,21 @@ const week = computed(() => {
   return `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`
 })
 
-// === Auto-advance ref ===
-const activeStep = ref('1')
-
-function advance(step: string) {
-  activeStep.value = step
-}
-
 // === Preview logic ===
-function buildPreview(promptId: number | null, prompts: any[], context: Record<string, string>) {
-  if (!promptId) { showPreview.value = false; return }
-  const tpl = prompts.find(p => p.id === promptId)
+watch(selectedScriptPromptId, (id) => {
+  if (!id) { showPreview.value = false; return }
+  const tpl = scriptPrompts.value.find(p => p.id === id)
   if (!tpl) { showPreview.value = false; return }
+  const product = selectedRow.value
   let content = tpl.content
-  for (const [key, val] of Object.entries(context)) {
-    content = content.replaceAll(`{{${key}}}`, val || `[${key}]`)
-  }
+    .replaceAll('{{product_name}}', product?.name || '[producto]')
+    .replaceAll('{{category}}', product?.category || '[categoría]')
+    .replaceAll('{{audience}}', 'Personas en España que buscan soluciones prácticas')
+    .replaceAll('{{pain}}', 'Problema que resuelve este producto')
+    .replaceAll('{{allowed_claims}}', 'Solo los que se pueden demostrar visualmente')
+    .replaceAll('{{restrictions}}', 'No inventar características')
   previewContent.value = content
   showPreview.value = true
-}
-
-watch(selectedScriptPromptId, (id) => {
-  const product = winner.value?.product
-  buildPreview(id, scriptPrompts.value, {
-    product_name: product?.name || '[producto]',
-    category: product?.category || '[categoría]',
-    audience: 'Personas en España que buscan soluciones prácticas',
-    pain: 'Problema que resuelve este producto',
-    allowed_claims: 'Solo los que se pueden demostrar visualmente',
-    restrictions: 'No inventar características',
-  })
-})
-
-watch(selectedRendererPromptId, (id) => {
-  const product = winner.value?.product
-  buildPreview(id, rendererPrompts.value, {
-    visual: '[descripción visual de la escena]',
-    product_name: product?.name || '[producto]',
-    category: product?.category || '[categoría]',
-  })
 })
 
 // === Step 1: Load Products ===
@@ -103,85 +74,80 @@ async function loadProducts() {
 async function createVideo() {
   if (!selectedRow.value) return
   loading.value = true
-  const { data } = await api.post('/videos', null, { params: { product_id: selectedRow.value.id, week: week.value } })
-  video.value = data
+  addLog(`Creando vídeo para: ${selectedRow.value.name}...`)
+  try {
+    const { data } = await api.post('/videos', null, { params: { product_id: selectedRow.value.id, week: week.value } })
+    video.value = data
+    addLog(`✓ Vídeo #${data.id} creado (semana ${week.value})`, 'success')
+    advance('2')
+  } catch (e: any) {
+    addLog(`✗ Error: ${e.response?.data?.detail || e.message}`, 'error')
+  }
   loading.value = false
-  advance('2')
 }
 
-// === Step 3: Generate Creative ===
+// === Step 2: Generate Creative ===
 async function generateCreative() {
   if (!video.value) return
   loading.value = true
-  const params: any = {}
-  if (selectedScriptPromptId.value) params.prompt_id = selectedScriptPromptId.value
-  const { data } = await api.post(`/videos/${video.value.id}/generate-creative`, null, { params })
-  creativePacks.value = data
+  addLog('Generando roteiros con IA...')
+  try {
+    const params: any = {}
+    if (selectedScriptPromptId.value) params.prompt_id = selectedScriptPromptId.value
+    const { data } = await api.post(`/videos/${video.value.id}/generate-creative`, null, { params })
+    creativePacks.value = data
+    addLog(`✓ ${data.length} roteiros generados`, 'success')
+    advance('3')
+  } catch (e: any) {
+    addLog(`✗ Error generando roteiros: ${e.response?.data?.detail || e.message}`, 'error')
+  }
   loading.value = false
   showPreview.value = false
-  advance('3')
 }
 
 // === Step 3: Compliance ===
 async function runCompliance() {
   if (!video.value) return
   loading.value = true
-  const { data } = await api.post(`/videos/${video.value.id}/compliance-check`)
-  creativePacks.value = data
+  addLog('Verificando compliance...')
+  try {
+    const { data } = await api.post(`/videos/${video.value.id}/compliance-check`)
+    creativePacks.value = data
+    addLog(`✓ Compliance verificado`, 'success')
+    advance('4')
+  } catch (e: any) {
+    addLog(`✗ Error en compliance: ${e.response?.data?.detail || e.message}`, 'error')
+  }
   loading.value = false
-  advance('4')
 }
 
 // === Step 4: Select Pack ===
 async function selectPack(packId: number) {
   if (!video.value) return
-  await api.post(`/videos/${video.value.id}/select-pack`, null, { params: { pack_id: packId } })
-  selectedPackId.value = packId
-  creativePacks.value = creativePacks.value.map(p => ({ ...p, selected: p.id === packId }))
-  advance('5')
+  addLog(`Seleccionando roteiro...`)
+  try {
+    await api.post(`/videos/${video.value.id}/select-pack`, null, { params: { pack_id: packId } })
+    selectedPackId.value = packId
+    creativePacks.value = creativePacks.value.map(p => ({ ...p, selected: p.id === packId }))
+    addLog('✓ Roteiro seleccionado', 'success')
+    advance('5')
+  } catch (e: any) {
+    addLog(`✗ Error: ${e.response?.data?.detail || e.message}`, 'error')
+  }
 }
 
-// === Step 5: TTS ===
-async function generateTTS() {
+// === Step 5: Download Pack ===
+function downloadPack() {
   if (!video.value) return
-  loading.value = true
-  const { data } = await api.post(`/videos/${video.value.id}/generate-tts`)
-  ttsResult.value = data
-  loading.value = false
-  advance('6')
-}
-
-// === Step 6: Generate Prompts ===
-async function generatePrompts() {
-  if (!video.value) return
-  loading.value = true
-  const params: any = { renderer: renderer.value }
-  if (selectedRendererPromptId.value) params.prompt_id = selectedRendererPromptId.value
-  const { data } = await api.post(`/videos/${video.value.id}/generate-prompts`, null, { params })
-  promptsResult.value = data
-  loading.value = false
-  showPreview.value = false
-  advance('7')
-}
-
-// === Step 7: Publish ===
-async function publishVideo() {
-  if (!video.value) return
-  loading.value = true
-  const params: any = { platform: 'tiktok' }
-  if (tiktokUrl.value) params.tiktok_url = tiktokUrl.value
-  await api.post(`/videos/${video.value.id}/publish`, null, { params })
-  published.value = true
-  loading.value = false
+  addLog('Descargando pack...')
+  window.open(`/api/videos/${video.value.id}/download-pack`, '_blank')
+  addLog('✓ Pack descargado', 'success')
 }
 
 // === Load prompts ===
 async function loadPromptOptions() {
   const { data: script } = await api.get('/prompts/', { params: { type: 'script_agent' } })
   scriptPrompts.value = script
-  const { data: seed } = await api.get('/prompts/', { params: { type: 'seedance_prompt' } })
-  const { data: run } = await api.get('/prompts/', { params: { type: 'runway_prompt' } })
-  rendererPrompts.value = [...seed, ...run]
 }
 
 onMounted(async () => {
@@ -192,7 +158,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Workflow — Crear Vídeo</h2>
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Workflow — Crear Vídeo</h2>
 
     <Stepper :value="activeStep">
       <StepList>
@@ -200,9 +166,7 @@ onMounted(async () => {
         <Step value="2">Roteiro</Step>
         <Step value="3">Compliance</Step>
         <Step value="4">Seleccionar</Step>
-        <Step value="5">Audio</Step>
-        <Step value="6">Prompts</Step>
-        <Step value="7">Publicar</Step>
+        <Step value="5">Pack</Step>
       </StepList>
 
       <StepPanels>
@@ -219,10 +183,7 @@ onMounted(async () => {
               <Column selectionMode="single" style="width: 3rem" />
               <Column field="name" header="Nombre" sortable />
               <Column field="category" header="Categoría" sortable />
-              <Column field="total_score" header="Score" sortable style="width: 6rem" />
-              <Column field="price" header="Precio" sortable style="width: 6rem">
-                <template #body="{ data }">{{ data.price ? `€${data.price}` : '—' }}</template>
-              </Column>
+              <Column field="total_score" header="Score" sortable style="width: 5rem" />
               <Column header="Assets" style="width: 5rem">
                 <template #body="{ data }">
                   <Tag v-if="data.assets?.length" :value="data.assets.length" severity="info" />
@@ -240,15 +201,14 @@ onMounted(async () => {
         <StepPanel v-slot="{ activateCallback }" value="2">
           <div class="p-4">
             <p class="text-gray-600 mb-4">Genera 3 variaciones de roteiro creativo.</p>
-            <!-- Preview -->
             <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
+              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt:</p>
               <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
             </div>
             <div class="flex gap-4 items-end mb-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Prompt Template</label>
-                <Select v-model="selectedScriptPromptId" :options="scriptPrompts" optionLabel="name" optionValue="id" placeholder="Default (archivo .md)" showClear class="w-64" />
+                <Select v-model="selectedScriptPromptId" :options="scriptPrompts" optionLabel="name" optionValue="id" placeholder="Default" showClear class="w-64" />
               </div>
               <Button label="Generar Roteiros" icon="pi pi-sparkles" :loading="loading" @click="generateCreative(); activateCallback('3')" />
             </div>
@@ -302,72 +262,67 @@ onMounted(async () => {
           </div>
         </StepPanel>
 
-        <!-- Step 5: TTS -->
-        <StepPanel v-slot="{ activateCallback }" value="5">
+        <!-- Step 5: Pack (resumo + download) -->
+        <StepPanel value="5">
           <div class="p-4">
-            <p class="text-gray-600 mb-4">Genera el audio de narración (voiceover).</p>
-            <Button label="Generar Audio" icon="pi pi-volume-up" :loading="loading" @click="generateTTS(); activateCallback('6')" class="mb-4" />
-            <div v-if="ttsResult" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p class="text-sm text-blue-800">✅ Audio generado: {{ ttsResult.characters }} caracteres</p>
-              <p class="text-xs text-blue-600">{{ ttsResult.audio_path }}</p>
-            </div>
-          </div>
-        </StepPanel>
+            <h3 class="text-lg font-semibold mb-4">📦 Pack de Materiales</h3>
 
-        <!-- Step 6: Generate Prompts -->
-        <StepPanel v-slot="{ activateCallback }" value="6">
-          <div class="p-4">
-            <p class="text-gray-600 mb-4">Genera prompts para el renderer de vídeo.</p>
-            <!-- Preview -->
-            <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt (variables sustituidas):</p>
-              <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
-            </div>
-            <div class="flex gap-4 items-end mb-4">
-              <div>
-                <label class="block text-sm font-medium mb-1">Renderer</label>
-                <Select v-model="renderer" :options="rendererOptions" optionLabel="label" optionValue="value" class="w-40" />
+            <!-- Resumo do roteiro selecionado -->
+            <div v-if="selectedPack" class="space-y-4 mb-6">
+              <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <p class="text-sm font-semibold mb-2">🎯 Gancho</p>
+                <p class="text-gray-700 dark:text-gray-200">{{ selectedPack.hook }}</p>
               </div>
-              <div>
-                <label class="block text-sm font-medium mb-1">Prompt Template</label>
-                <Select v-model="selectedRendererPromptId" :options="rendererPrompts" optionLabel="name" optionValue="id" placeholder="Default" showClear class="w-64" />
-              </div>
-              <Button label="Generar Prompts" icon="pi pi-video" :loading="loading" @click="generatePrompts(); activateCallback('7')" />
-            </div>
-            <div v-if="promptsResult" class="space-y-2">
-              <div v-for="(p, i) in promptsResult.prompts" :key="i" class="bg-gray-50 border rounded p-3">
-                <p class="text-xs text-gray-500">Escena {{ i + 1 }} ({{ p.duration }}s)</p>
-                <p class="text-sm font-mono">{{ p.prompt }}</p>
-              </div>
-            </div>
-          </div>
-        </StepPanel>
 
-        <!-- Step 7: Publish -->
-        <StepPanel value="7">
-          <div class="p-4">
-            <div v-if="!published">
-              <p class="text-gray-600 mb-4">Publica el vídeo en TikTok y pega la URL aquí para rastrear métricas después.</p>
-              <div class="mb-4 max-w-lg">
-                <label class="block text-sm font-medium mb-1">URL del vídeo en TikTok</label>
-                <InputText v-model="tiktokUrl" class="w-full" placeholder="https://www.tiktok.com/@tu_usuario/video/..." />
-                <p class="text-xs text-gray-400 mt-1">Pega la URL después de publicar. Se usará para importar métricas de Sort Feed.</p>
+              <div v-if="selectedPack.script_json?.length" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <p class="text-sm font-semibold mb-2">🎬 Escenas ({{ selectedPack.script_json.length }})</p>
+                <div class="space-y-2">
+                  <div v-for="(scene, i) in selectedPack.script_json" :key="i" class="border-l-2 border-blue-300 pl-3">
+                    <p class="text-xs text-gray-400">{{ scene.start || 0 }}s – {{ scene.end || 0 }}s</p>
+                    <p v-if="scene.text" class="text-sm">📝 {{ scene.text }}</p>
+                    <p v-if="scene.voiceover" class="text-xs text-gray-600">🗣️ {{ scene.voiceover }}</p>
+                    <p v-if="scene.visual" class="text-xs text-gray-500 italic">🎥 {{ scene.visual }}</p>
+                  </div>
+                </div>
               </div>
-              <Button label="Marcar como Publicado" icon="pi pi-send" :loading="loading" @click="publishVideo" />
-            </div>
-            <div v-else class="text-center py-8">
-              <p class="text-4xl mb-4">🎉</p>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">¡Publicado!</h3>
-              <p class="text-gray-600">Vídeo registrado. Importa métricas desde <a href="/metrics" class="text-blue-600 underline">Sort Feed</a> cuando tengas datos.</p>
-              <div v-if="promptsResult" class="mt-4 text-left max-w-md mx-auto bg-gray-50 rounded-lg p-4 text-sm">
-                <p><strong>Producto:</strong> {{ promptsResult.product }}</p>
-                <p><strong>Caption:</strong> {{ promptsResult.caption }}</p>
-                <p><strong>Hashtags:</strong> {{ promptsResult.hashtags?.join(' ') }}</p>
+
+              <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <p class="text-sm font-semibold mb-2">📱 Caption + Hashtags</p>
+                <p class="text-gray-700 dark:text-gray-200">{{ selectedPack.caption }}</p>
+                <p class="text-blue-600 mt-1">{{ selectedPack.hashtags?.join(' ') }}</p>
+              </div>
+
+              <!-- Assets do produto -->
+              <div v-if="selectedRow?.assets?.length" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <p class="text-sm font-semibold mb-2">📎 Materiales del producto ({{ selectedRow.assets.length }})</p>
+                <div class="space-y-1">
+                  <a v-for="(asset, i) in selectedRow.assets" :key="i" :href="asset.url" target="_blank"
+                     class="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                    <Tag :value="asset.type" size="small" /> {{ asset.label || asset.url }}
+                  </a>
+                </div>
               </div>
             </div>
+
+            <!-- Download -->
+            <Button label="⬇️ Descargar Pack (ZIP)" icon="pi pi-download" size="large" @click="downloadPack" class="w-full" />
+            <p class="text-xs text-gray-400 mt-2 text-center">Incluye: roteiro completo (JSON + TXT), caption, hashtags, y links de materiales.</p>
           </div>
         </StepPanel>
       </StepPanels>
     </Stepper>
+
+    <!-- Log Panel -->
+    <div v-if="logs.length" class="mt-6 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-4 py-2">
+        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">📋 Log</span>
+        <button @click="logs = []" class="text-xs text-gray-400 hover:text-red-500">Limpiar</button>
+      </div>
+      <div class="max-h-40 overflow-auto p-3 bg-gray-50 dark:bg-gray-900 font-mono text-xs space-y-1">
+        <div v-for="(log, i) in logs" :key="i" :class="log.type === 'error' ? 'text-red-500' : log.type === 'success' ? 'text-green-600' : 'text-gray-500'">
+          <span class="text-gray-400">{{ log.time }}</span> {{ log.msg }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>

@@ -10,8 +10,13 @@ const { isDark, toggle } = useDarkMode()
     <!-- Sidebar -->
     <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Video2Sale</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Fábrica de conteúdo</p>
+        <div class="flex items-center gap-3">
+          <img src="/logo.png" alt="Video2Sale" class="w-9 h-9 rounded-lg" />
+          <div>
+            <h1 class="text-lg font-bold text-gray-900 dark:text-white">Video2Sale</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Fábrica de conteúdo</p>
+          </div>
+        </div>
       </div>
       <nav class="flex-1 p-4 space-y-1">
         <RouterLink to="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">

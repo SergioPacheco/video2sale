@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     # Geral
     default_language: str = "es-ES"
 
+    # TikTok Developer API
+    tiktok_client_key: str = ""
+    tiktok_client_secret: str = ""
+
     class Config:
         env_file = ".env"
 

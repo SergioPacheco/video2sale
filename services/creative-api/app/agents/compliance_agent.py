@@ -9,7 +9,7 @@ PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "compliance-agent.md"
 
 
 def _get_client():
-    return AsyncOpenAI(api_key=settings.openai_api_key)
+    return AsyncOpenAI(api_key=settings.openai_api_key, timeout=120)
 
 
 async def check_compliance(pack) -> dict:

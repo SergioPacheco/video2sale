@@ -105,9 +105,11 @@ async def generate_creative(video_id: int, prompt_id: int | None = None, db: Ses
     for i, pack in enumerate(packs, 1):
         cp = VideoCreativePack(
             video_id=video.id, version=i,
-            hook=pack["hook"], script_json=pack["scenes"],
-            caption=pack["caption"], hashtags=pack.get("hashtags", []),
-            affiliate_disclaimer=pack.get("affiliate_disclaimer", ""),
+            hook=pack.get("hook") or pack.get("gancho") or "",
+            script_json=pack.get("scenes") or pack.get("script_json") or pack.get("escenas") or [],
+            caption=pack.get("caption") or pack.get("descripcion") or "",
+            hashtags=pack.get("hashtags", []),
+            affiliate_disclaimer=pack.get("affiliate_disclaimer") or pack.get("aviso_afiliado") or "",
             model_used=settings.openai_model,
             tokens_input=pack.get("tokens_input", 0),
             tokens_output=pack.get("tokens_output", 0),
@@ -192,7 +194,13 @@ async def generate_tts(video_id: int, db: Session = Depends(get_db)):
 
     # Concatenar voiceover de todas as cenas
     scenes = pack.script_json or []
-    full_text = " ".join(scene.get("voiceover", "") for scene in scenes)
+    full_text = ""
+    for scene in scenes:
+        if isinstance(scene, dict):
+            full_text += " " + scene.get("voiceover", "")
+        elif isinstance(scene, str):
+            full_text += " " + scene
+    full_text = full_text.strip()
 
     if not full_text.strip():
         raise HTTPException(status_code=400, detail="Nenhum texto de narração nas cenas")
@@ -299,6 +307,58 @@ def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int |
         "voiceover_path": video.voiceover_path,
     }
 
+
+
+# === Download Pack ===
+
+@router.get("/videos/{video_id}/download-pack")
+def download_pack(video_id: int, db: Session = Depends(get_db)):
+    """Gera ZIP com roteiro, caption, hashtags e links de assets."""
+    import zipfile, io, json as json_lib
+    from fastapi.responses import StreamingResponse
+
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vídeo não encontrado")
+
+    pack = db.query(VideoCreativePack).filter(
+        VideoCreativePack.id == video.selected_creative_pack_id
+    ).first()
+    if not pack:
+        raise HTTPException(status_code=400, detail="Nenhum roteiro selecionado")
+
+    product = db.query(Product).filter(Product.id == video.product_id).first()
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        roteiro = {
+            "product": product.name, "category": product.category,
+            "hook": pack.hook, "scenes": pack.script_json,
+            "caption": pack.caption, "hashtags": pack.hashtags,
+            "affiliate_disclaimer": pack.affiliate_disclaimer,
+        }
+        zf.writestr("roteiro.json", json_lib.dumps(roteiro, ensure_ascii=False, indent=2))
+
+        txt = f"PRODUCTO: {product.name}\nCATEGORÍA: {product.category}\n\nGANCHO: {pack.hook}\n\nESCENAS:\n"
+        for i, scene in enumerate(pack.script_json or [], 1):
+            if isinstance(scene, dict):
+                txt += f"\n  Escena {i} ({scene.get('start',0)}s - {scene.get('end',0)}s)\n"
+                txt += f"    Texto: {scene.get('text','')}\n"
+                txt += f"    Narración: {scene.get('voiceover','')}\n"
+                txt += f"    Visual: {scene.get('visual','')}\n"
+        txt += f"\nCAPTION: {pack.caption}\nHASHTAGS: {' '.join(pack.hashtags or [])}\n"
+        zf.writestr("roteiro.txt", txt)
+
+        if product.assets:
+            assets_txt = "MATERIALES DEL PRODUCTO\n\n"
+            for asset in product.assets:
+                assets_txt += f"[{asset.get('type','')}] {asset.get('label','')}\n  {asset.get('url','')}\n\n"
+            zf.writestr("assets.txt", assets_txt)
+
+    buffer.seek(0)
+    filename = f"pack-{product.name[:20].replace(' ','-')}-{video.week}.zip"
+    return StreamingResponse(buffer, media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 # === T10: List/Detail Videos ===
 

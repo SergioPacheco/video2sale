@@ -13,6 +13,7 @@ const router = createRouter({
     { path: '/metrics', name: 'metrics', component: () => import('../pages/MetricsPage.vue') },
     { path: '/trending', name: 'trending', component: () => import('../pages/TrendingPage.vue') },
     { path: '/guide', name: 'guide', component: () => import('../pages/GuidePage.vue') },
+    { path: '/connect', name: 'connect', component: () => import('../pages/ConnectPage.vue') },
   ],
 })
 
