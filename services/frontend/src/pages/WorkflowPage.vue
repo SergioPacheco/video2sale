@@ -192,7 +192,7 @@ onMounted(async () => {
   <div>
     <h2 class="text-2xl font-bold text-gray-900 mb-6">Workflow — Crear Vídeo</h2>
 
-    <Stepper :value="activeStep" linear>
+    <Stepper :value="activeStep">
       <StepList>
         <Step value="1">Producto</Step>
         <Step value="2">Roteiro</Step>
