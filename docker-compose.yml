@@ -1,0 +1,87 @@
+services:
+  # === BANCO DE DADOS ===
+  postgres:
+    image: postgres:16-alpine
+    container_name: avf-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-avf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avf}
+      POSTGRES_DB: ${POSTGRES_DB:-avf}
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avf"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # === ORQUESTRADOR ===
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: avf-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-avf}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-avf}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-avf}
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: ${TIMEZONE:-Europe/Madrid}
+    volumes:
+      - ./docker-data/n8n:/home/node/.n8n
+      - ./data:/data
+      - ./output:/output
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # === API PRINCIPAL (FastAPI) ===
+  creative-api:
+    build: ./services/creative-api
+    container_name: avf-creative-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-avf}:${POSTGRES_PASSWORD:-avf}@postgres:5432/${POSTGRES_DB:-avf}
+    volumes:
+      - ./data:/data
+      - ./output:/output
+      - ./services/creative-api/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # === TTS SERVICE (Piper) ===
+  tts-service:
+    build: ./services/tts-service
+    container_name: avf-tts-service
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      - ./output:/output
+      - ./docker-data/piper-models:/models
+
+  # === REMOTION RENDERER ===
+  remotion-renderer:
+    build: ./services/remotion-renderer
+    container_name: avf-remotion-renderer
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/data
+      - ./output:/output
+    depends_on:
+      - creative-api
+      - tts-service

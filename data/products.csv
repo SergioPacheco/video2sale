@@ -1,0 +1,11 @@
+id,name,category,source,product_url,shop_url,price,commission_estimate,pain_score,visual_score,trend_score,competition_score,availability_score,demo_score,impulse_buy_score,notes
+1,Cortador de legumes multifuncional,Cozinha,TikTok Shop,https://example.com/p1,https://example.com/s1,14.99,3,8,9,8,7,8,10,8,Produto forte para demonstração visual
+2,Organizador de cozinha compacto,Casa,TikTok Shop,https://example.com/p2,https://example.com/s2,19.99,3,9,8,7,5,8,8,7,Bom para pisos pequenos na Espanha
+3,Suporte notebook ergonômico,Home Office,TikTok Shop,https://example.com/p3,https://example.com/s3,24.99,4,7,7,6,6,9,6,6,Bom para trabalho remoto
+4,Luz LED para selfie,Tecnologia,TikTok Shop,https://example.com/p4,https://example.com/s4,9.99,2,6,9,9,8,9,7,9,Viral no TikTok mas muita concorrência
+5,Escova de limpeza elétrica,Limpeza,TikTok Shop,https://example.com/p5,https://example.com/s5,12.99,3,9,8,7,4,8,9,8,Antes/depois muito impactante
+6,Garrafa térmica inteligente,Fitness,TikTok Shop,https://example.com/p6,https://example.com/s6,18.99,3,5,7,8,7,7,5,6,Difícil demonstrar em vídeo curto
+7,Mini projetor portátil,Entretenimento,TikTok Shop,https://example.com/p7,https://example.com/s7,39.99,6,7,9,8,5,6,8,7,Preço alto mas comissão boa
+8,Organizador de cabos magnético,Home Office,TikTok Shop,https://example.com/p8,https://example.com/s8,7.99,1,8,8,6,6,9,9,9,Barato e demonstrável — compra por impulso
+9,Espremedor de frutas manual,Cozinha,TikTok Shop,https://example.com/p9,https://example.com/s9,11.99,2,7,8,5,7,8,8,7,Visual bom mas produto comum
+10,Aspirador de mesa portátil,Casa,TikTok Shop,https://example.com/p10,https://example.com/s10,15.99,3,8,8,7,5,8,9,8,Demonstração satisfatória tipo ASMR

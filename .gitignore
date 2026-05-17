@@ -1,0 +1,25 @@
+# Docker data
+docker-data/
+
+# Output gerado
+output/
+
+# Env com secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (pesados)
+models/
+*.onnx
