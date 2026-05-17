@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Package, Video, Trophy, BarChart3, Wand2, Settings, Moon, Sun, TrendingUp } from 'lucide-vue-next'
+import { Package, Video, Trophy, BarChart3, Wand2, Settings, Moon, Sun, TrendingUp, BookOpen } from 'lucide-vue-next'
 import { useDarkMode } from '../composables/useDarkMode'
 
 const { isDark, toggle } = useDarkMode()
@@ -40,6 +40,10 @@ const { isDark, toggle } = useDarkMode()
         </RouterLink>
       </nav>
       <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
+        <RouterLink to="/guide" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <BookOpen :size="20" />
+          <span>Guía</span>
+        </RouterLink>
         <button @click="toggle" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
           <Sun v-if="isDark" :size="20" />
           <Moon v-else :size="20" />
