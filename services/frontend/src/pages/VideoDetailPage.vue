@@ -13,6 +13,7 @@ const loading = ref(false)
 const generating = ref(false)
 
 const videoId = computed(() => route.params.id)
+const selectedPack = computed(() => video.value?.creative_packs?.find((p: any) => p.selected))
 
 async function loadVideo() {
   loading.value = true
@@ -101,6 +102,49 @@ onMounted(loadVideo)
       <Button v-if="video.status === 'human_selected'" label="Gerar Áudio" icon="pi pi-volume-up" @click="generateTTS" />
       <Button v-if="video.status === 'tts_generated'" label="Prompts Seedance" icon="pi pi-video" @click="generatePrompts('seedance')" />
       <Button v-if="video.status === 'tts_generated'" label="Prompts Runway" icon="pi pi-video" severity="secondary" @click="generatePrompts('runway')" />
+    </div>
+
+    <!-- Preview del Vídeo -->
+    <div v-if="selectedPack || video.video_path || video.voiceover_path" class="mb-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-lg font-semibold mb-4 dark:text-white">🎬 Preview del Vídeo</h3>
+
+      <!-- Video final (si existe) -->
+      <div v-if="video.video_path" class="mb-4">
+        <video controls class="w-full max-w-sm rounded-lg mx-auto bg-black aspect-[9/16]">
+          <source :src="video.video_path" type="video/mp4" />
+        </video>
+      </div>
+
+      <!-- Audio player -->
+      <div v-if="video.voiceover_path" class="mb-4">
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">🔊 Voiceover</p>
+        <audio controls class="w-full">
+          <source :src="video.voiceover_path" type="audio/mpeg" />
+        </audio>
+      </div>
+
+      <!-- Storyboard (cenas do pack selecionado) -->
+      <div v-if="selectedPack?.script_json?.length">
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">📋 Storyboard ({{ selectedPack.script_json.length }} escenas)</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div v-for="(scene, i) in selectedPack.script_json" :key="i"
+               class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400">{{ scene.start }}s – {{ scene.end }}s</span>
+              <span class="text-xs text-gray-400">Escena {{ i + 1 }}</span>
+            </div>
+            <p v-if="scene.text" class="text-sm font-medium dark:text-white mb-1">📝 {{ scene.text }}</p>
+            <p v-if="scene.voiceover" class="text-xs text-gray-600 dark:text-gray-300 mb-1">🗣️ {{ scene.voiceover }}</p>
+            <p v-if="scene.visual" class="text-xs text-gray-500 dark:text-gray-400 italic">🎥 {{ scene.visual }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caption + Hashtags -->
+      <div v-if="selectedPack" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+        <p v-if="selectedPack.caption" class="text-sm dark:text-gray-200"><strong>Caption:</strong> {{ selectedPack.caption }}</p>
+        <p v-if="selectedPack.hashtags?.length" class="text-sm text-blue-600 dark:text-blue-400 mt-1">{{ selectedPack.hashtags.join(' ') }}</p>
+      </div>
     </div>
 
     <!-- Creative Packs -->
