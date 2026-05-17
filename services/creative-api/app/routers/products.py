@@ -5,7 +5,7 @@ import io
 
 from app.database import get_db
 from app.models import Product, ProductSearch
-from app.schemas import ProductOut, ProductImportResponse
+from app.schemas import ProductOut, ProductBase, ProductImportResponse
 from app.agents.product_ranker import calculate_score
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -124,3 +124,39 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     return product
+
+
+@router.post("/", response_model=ProductOut, status_code=201)
+def create_product(data: ProductBase, db: Session = Depends(get_db)):
+    """Cria um produto manualmente."""
+    product = Product(**data.model_dump())
+    product.total_score = calculate_score(data.model_dump())
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.put("/{product_id}", response_model=ProductOut)
+def update_product(product_id: int, data: ProductBase, db: Session = Depends(get_db)):
+    """Atualiza um produto."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(product, key, value)
+    product.total_score = calculate_score(data.model_dump())
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.delete("/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    """Desativa um produto (soft delete)."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    product.active = False
+    db.commit()
+    return {"status": "ok", "id": product_id}

@@ -18,6 +18,23 @@ router = APIRouter(tags=["videos"])
 
 # === T04: Weekly Winner ===
 
+@router.post("/videos", response_model=VideoOut)
+def create_video(product_id: int, week: str, db: Session = Depends(get_db)):
+    """Cria um vídeo para um produto selecionado manualmente."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    video = Video(product_id=product_id, week=week, status="pending_creative")
+    db.add(video)
+    db.flush()
+    db.add(VideoEvent(video_id=video.id, event_type="product_ranked", actor="human",
+                      details={"product_id": product_id, "score": float(product.total_score or 0)}))
+    db.commit()
+    db.refresh(video)
+    return video
+
+
 @router.post("/weekly-winner", response_model=WeeklyWinnerOut)
 def select_weekly_winner(req: WeeklyWinnerRequest, db: Session = Depends(get_db)):
     """Calcula scores e seleciona produto vencedor da semana."""

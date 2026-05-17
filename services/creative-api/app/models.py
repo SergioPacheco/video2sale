@@ -62,6 +62,7 @@ class Product(Base):
     commission_estimate = Column(Numeric(5, 2), default=0)
     total_score = Column(Numeric(5, 2), default=0)
     notes = Column(Text)
+    assets = Column(JSONB, default=[])
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

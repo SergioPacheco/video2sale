@@ -56,12 +56,14 @@ class ProductBase(BaseModel):
     impulse_buy_score: int = 0
     commission_estimate: float = 0
     notes: str | None = None
+    assets: list[dict] | None = []
 
 
 class ProductOut(ProductBase):
     id: int
     total_score: float = 0
     active: bool = True
+    assets: list[dict] | None = []
     created_at: datetime
 
     class Config:

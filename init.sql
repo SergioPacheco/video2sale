@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS products (
     total_score NUMERIC(5,2) DEFAULT 0,
     -- Meta
     notes TEXT,
+    assets JSONB DEFAULT '[]',                 -- [{url, type, label}] links de imagens/materiais para vídeo
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
