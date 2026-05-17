@@ -1,20 +1,16 @@
 from fastapi import FastAPI
-from app.config import settings
+from app.routers import products, videos
 
 app = FastAPI(
-    title="Affiliate Video Factory - Creative API",
+    title="Video2Sale — Creative API",
     version="0.1.0",
     description="API para ranking de produtos, geração criativa e orquestração de vídeos",
 )
 
+app.include_router(products.router)
+app.include_router(videos.router)
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "creative-api"}
-
-
-# --- Endpoints serão implementados aqui ---
-# POST /products/import
-# POST /weekly-winner
-# POST /creative-pack
-# POST /compliance-check
+    return {"status": "ok", "service": "creative-api", "version": "0.1.0"}
