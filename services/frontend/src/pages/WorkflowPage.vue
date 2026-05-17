@@ -12,7 +12,6 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
 import api from '../services/api'
 
 // === State ===
@@ -35,8 +34,8 @@ const renderer = ref('seedance')
 const showPreview = ref(false)
 const previewContent = ref('')
 
-// Publish metrics
-const metrics = ref({ views: 0, clicks: 0, conversions: 0 })
+// Publish
+const tiktokUrl = ref('')
 
 const rendererOptions = [
   { label: 'Seedance', value: 'seedance' },
@@ -175,9 +174,9 @@ async function generatePrompts() {
 async function publishVideo() {
   if (!video.value) return
   loading.value = true
-  await api.post(`/videos/${video.value.id}/publish`, null, {
-    params: { platform: 'tiktok', metrics: JSON.stringify(metrics.value) },
-  })
+  const params: any = { platform: 'tiktok' }
+  if (tiktokUrl.value) params.tiktok_url = tiktokUrl.value
+  await api.post(`/videos/${video.value.id}/publish`, null, { params })
   published.value = true
   loading.value = false
 }
@@ -353,27 +352,18 @@ onMounted(async () => {
         <StepPanel value="8">
           <div class="p-4">
             <div v-if="!published">
-              <p class="text-gray-600 mb-4">Registra la publicación y métricas iniciales.</p>
-              <div class="grid grid-cols-3 gap-4 mb-6 max-w-lg">
-                <div>
-                  <label class="block text-xs font-medium mb-1">Views</label>
-                  <InputNumber v-model="metrics.views" class="w-full" :min="0" />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium mb-1">Clicks</label>
-                  <InputNumber v-model="metrics.clicks" class="w-full" :min="0" />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium mb-1">Conversiones</label>
-                  <InputNumber v-model="metrics.conversions" class="w-full" :min="0" />
-                </div>
+              <p class="text-gray-600 mb-4">Publica el vídeo en TikTok y pega la URL aquí para rastrear métricas después.</p>
+              <div class="mb-4 max-w-lg">
+                <label class="block text-sm font-medium mb-1">URL del vídeo en TikTok</label>
+                <InputText v-model="tiktokUrl" class="w-full" placeholder="https://www.tiktok.com/@tu_usuario/video/..." />
+                <p class="text-xs text-gray-400 mt-1">Pega la URL después de publicar. Se usará para importar métricas de Sort Feed.</p>
               </div>
               <Button label="Marcar como Publicado" icon="pi pi-send" :loading="loading" @click="publishVideo" />
             </div>
             <div v-else class="text-center py-8">
               <p class="text-4xl mb-4">🎉</p>
               <h3 class="text-xl font-bold text-gray-900 mb-2">¡Publicado!</h3>
-              <p class="text-gray-600">Vídeo registrado como publicado en TikTok.</p>
+              <p class="text-gray-600">Vídeo registrado. Importa métricas desde <a href="/metrics" class="text-blue-600 underline">Sort Feed</a> cuando tengas datos.</p>
               <div v-if="promptsResult" class="mt-4 text-left max-w-md mx-auto bg-gray-50 rounded-lg p-4 text-sm">
                 <p><strong>Producto:</strong> {{ promptsResult.product }}</p>
                 <p><strong>Caption:</strong> {{ promptsResult.caption }}</p>

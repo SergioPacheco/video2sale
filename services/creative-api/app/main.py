@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import products, videos, prompts, stats
+from app.routers import products, videos, prompts, stats, metrics
 
 app = FastAPI(
     title="Video2Sale — Creative API",
@@ -11,6 +11,7 @@ app.include_router(products.router)
 app.include_router(videos.router)
 app.include_router(prompts.router)
 app.include_router(stats.router)
+app.include_router(metrics.router)
 
 
 @app.get("/health")

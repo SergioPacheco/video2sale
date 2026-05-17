@@ -10,6 +10,7 @@ const router = createRouter({
     { path: '/videos', name: 'videos', component: () => import('../pages/VideosPage.vue') },
     { path: '/videos/:id', name: 'video-detail', component: () => import('../pages/VideoDetailPage.vue') },
     { path: '/prompts', name: 'prompts', component: () => import('../pages/PromptsPage.vue') },
+    { path: '/metrics', name: 'metrics', component: () => import('../pages/MetricsPage.vue') },
   ],
 })
 
