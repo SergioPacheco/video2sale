@@ -86,6 +86,9 @@ CREATE TABLE IF NOT EXISTS videos (
     voiceover_path TEXT,
     video_path TEXT,
     thumbnail_path TEXT,
+    -- Renderer
+    renderer TEXT DEFAULT 'seedance',
+    renderer_config JSONB,
     -- Estado
     status TEXT DEFAULT 'pending_creative',
     -- Custo real acumulado

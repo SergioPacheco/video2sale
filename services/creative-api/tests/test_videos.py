@@ -47,10 +47,11 @@ def test_list_videos_after_winner(client):
 def test_get_video_detail(client):
     _import_products(client)
     client.post("/weekly-winner", json={"week": "2026-W21"})
-    resp = client.get("/videos/1")
+    videos = client.get("/videos").json()
+    video_id = videos[0]["id"]
+    resp = client.get(f"/videos/{video_id}")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == 1
     assert "events" in data
     assert len(data["events"]) == 1
     assert data["events"][0]["event_type"] == "product_ranked"
@@ -66,6 +67,8 @@ def test_generate_creative(mock_get_client, client):
     """Testa geração de creative packs com OpenAI mockada."""
     _import_products(client)
     client.post("/weekly-winner", json={"week": "2026-W21"})
+    videos = client.get("/videos").json()
+    video_id = videos[0]["id"]
 
     mock_client = AsyncMock()
     mock_response = AsyncMock()
@@ -77,7 +80,7 @@ def test_generate_creative(mock_get_client, client):
     mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     mock_get_client.return_value = mock_client
 
-    resp = client.post("/videos/1/generate-creative")
+    resp = client.post(f"/videos/{video_id}/generate-creative")
     assert resp.status_code == 200
     packs = resp.json()
     assert len(packs) == 3
