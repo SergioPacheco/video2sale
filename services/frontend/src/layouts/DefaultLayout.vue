@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Package, Video, Trophy, BarChart3 } from 'lucide-vue-next'
+import { Package, Video, Trophy, BarChart3, Wand2, FileText } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -15,9 +15,13 @@ import { Package, Video, Trophy, BarChart3 } from 'lucide-vue-next'
           <BarChart3 :size="20" />
           <span>Dashboard</span>
         </RouterLink>
+        <RouterLink to="/workflow" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+          <Wand2 :size="20" />
+          <span>Workflow</span>
+        </RouterLink>
         <RouterLink to="/products" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
           <Package :size="20" />
-          <span>Produtos</span>
+          <span>Productos</span>
         </RouterLink>
         <RouterLink to="/ranking" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
           <Trophy :size="20" />
@@ -26,6 +30,10 @@ import { Package, Video, Trophy, BarChart3 } from 'lucide-vue-next'
         <RouterLink to="/videos" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
           <Video :size="20" />
           <span>Vídeos</span>
+        </RouterLink>
+        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+          <FileText :size="20" />
+          <span>Prompts</span>
         </RouterLink>
       </nav>
     </aside>

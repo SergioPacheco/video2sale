@@ -157,6 +157,23 @@ CREATE INDEX IF NOT EXISTS idx_events_video ON video_events(video_id);
 CREATE INDEX IF NOT EXISTS idx_events_type ON video_events(event_type);
 
 -- ============================================================
+-- PROMPT TEMPLATES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS prompt_templates (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL,                         -- 'script_agent', 'compliance', 'seedance_prompt', 'runway_prompt', 'tts_instructions'
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    variables TEXT[] DEFAULT '{}',
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_type ON prompt_templates(type);
+
+-- ============================================================
 -- ESTADOS POSSÍVEIS (referência)
 -- ============================================================
 -- videos.status:
@@ -171,3 +188,24 @@ CREATE INDEX IF NOT EXISTS idx_events_type ON video_events(event_type);
 --   rejected            → humano rejeitou
 --   published           → publicado manualmente
 --   error               → erro em alguma etapa
+
+-- ============================================================
+-- SEED: PROMPT TEMPLATES PADRÃO
+-- ============================================================
+
+INSERT INTO prompt_templates (type, name, content, variables) VALUES
+('script_agent', 'TikTok Shop — Estándar', E'Eres un estratega de vídeos cortos para TikTok Shop y afiliados.\n\nCrea un paquete creativo para un vídeo vertical de 30 segundos.\n\nProducto: {{product_name}}\nCategoría: {{category}}\nPúblico: {{audience}}\nDolor principal: {{pain}}\nBeneficios permitidos: {{allowed_claims}}\nRestricciones: {{restrictions}}\nIdioma: Español de España.\n\nReglas:\n- Gancho en los primeros 2 segundos.\n- Tono vendedor, rápido, natural y popular.\n- No inventar características.\n- No prometer resultados imposibles.\n- No citar precio fijo.\n- No usar alegaciones médicas.\n- No usar \"garantizado\", \"milagroso\", \"el mejor\".\n- Incluir CTA para link del producto / TikTok Shop.\n- Incluir aviso de afiliado.\n- Dividir en escenas de 2 a 5 segundos.\n- Generar texto en pantalla para cada escena.\n- Generar narración corta para cada escena.\n- Generar descripción visual de cada escena.\n- Generar caption para TikTok, Instagram y Shorts.\n\nDevuelve JSON válido con esta estructura:\n{\n  \"hook\": \"...\",\n  \"script\": \"...\",\n  \"scenes\": [\n    {\"start\": 0, \"end\": 3, \"text\": \"...\", \"voiceover\": \"...\", \"visual\": \"...\"}\n  ],\n  \"caption\": \"...\",\n  \"hashtags\": [],\n  \"affiliate_disclaimer\": \"...\"\n}',
+ ARRAY['product_name', 'category', 'audience', 'pain', 'allowed_claims', 'restrictions']),
+
+('compliance', 'Compliance — Estándar', E'Revisa el paquete creativo a continuación para contenido de afiliados y TikTok Shop.\n\nVerifica:\n1. Promesas exageradas.\n2. Beneficios inventados.\n3. Alegaciones médicas o financieras.\n4. Precio fijo que puede cambiar.\n5. Falta de aviso de afiliado.\n6. CTA engañoso.\n7. Uso indebido de marca.\n\nSi hay problemas, corrige manteniendo el estilo vendedor.\n\nDevuelve JSON:\n{\n  \"status\": \"APROBADO|AJUSTAR|REPROBADO\",\n  \"problems\": [],\n  \"fixed_creative_pack\": {}\n}',
+ ARRAY[]::TEXT[]),
+
+('seedance_prompt', 'Seedance — Producto Estándar', E'{{visual}}. Vertical 9:16, realistic product video, {{category}}, clean background, natural lighting, TikTok style, smooth camera movement, high quality product demonstration.',
+ ARRAY['visual', 'product_name', 'category']),
+
+('runway_prompt', 'Runway — Cinemático', E'{{visual}}. Cinematic vertical shot, product demonstration, smooth camera movement, 4K quality, professional lighting, shallow depth of field, {{category}} product showcase.',
+ ARRAY['visual', 'product_name', 'category']),
+
+('tts_instructions', 'Voz — Energética España', E'Habla con energía y entusiasmo natural. Tono de influencer español joven (25-35 años). Ritmo rápido pero claro. Énfasis en las palabras clave del producto. Pausa breve antes del CTA final.',
+ ARRAY[]::TEXT[])
+ON CONFLICT DO NOTHING;

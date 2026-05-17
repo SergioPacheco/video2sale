@@ -12,9 +12,25 @@ def _get_client():
     return AsyncOpenAI(api_key=settings.openai_api_key)
 
 
-async def generate_creative_packs(product, video) -> list[dict]:
+async def generate_creative_packs(product, video, custom_prompt=None) -> list[dict]:
     """Gera 3 variações de roteiro para um produto."""
-    system_prompt = PROMPT_PATH.read_text()
+    if custom_prompt:
+        # Substituir variáveis no template customizado
+        system_prompt = custom_prompt.content.replace(
+            "{{product_name}}", product.name
+        ).replace(
+            "{{category}}", product.category
+        ).replace(
+            "{{audience}}", "Personas en España que buscan soluciones prácticas"
+        ).replace(
+            "{{pain}}", "Problema que resuelve este producto en el día a día"
+        ).replace(
+            "{{allowed_claims}}", "Solo los que se pueden demostrar visualmente"
+        ).replace(
+            "{{restrictions}}", "No inventar características, no prometer resultados imposibles"
+        )
+    else:
+        system_prompt = PROMPT_PATH.read_text()
 
     user_prompt = (
         f"Producto: {product.name}\n"

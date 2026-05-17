@@ -65,15 +65,25 @@ def select_weekly_winner(req: WeeklyWinnerRequest, db: Session = Depends(get_db)
 # === T05: Generate Creative ===
 
 @router.post("/videos/{video_id}/generate-creative", response_model=list[CreativePackOut])
-async def generate_creative(video_id: int, db: Session = Depends(get_db)):
-    """Gera 3 variações de roteiro via OpenAI."""
+async def generate_creative(video_id: int, prompt_id: int | None = None, db: Session = Depends(get_db)):
+    """Gera 3 variações de roteiro via OpenAI. Aceita prompt_id para usar template customizado."""
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Vídeo não encontrado")
 
     product = db.query(Product).filter(Product.id == video.product_id).first()
 
-    packs = await generate_creative_packs(product, video)
+    # Buscar template customizado se fornecido
+    custom_prompt = None
+    if prompt_id:
+        from app.models import PromptTemplate
+        custom_prompt = db.query(PromptTemplate).filter(
+            PromptTemplate.id == prompt_id, PromptTemplate.active == True
+        ).first()
+        if not custom_prompt:
+            raise HTTPException(status_code=404, detail="Prompt template não encontrado")
+
+    packs = await generate_creative_packs(product, video, custom_prompt=custom_prompt)
 
     for i, pack in enumerate(packs, 1):
         cp = VideoCreativePack(
@@ -195,8 +205,8 @@ async def generate_tts(video_id: int, db: Session = Depends(get_db)):
 # === T09: Generate Prompts (Seedance/Runway) ===
 
 @router.post("/videos/{video_id}/generate-prompts")
-def generate_prompts(video_id: int, renderer: str = "seedance", db: Session = Depends(get_db)):
-    """Gera prompts otimizados para o renderer escolhido."""
+def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int | None = None, db: Session = Depends(get_db)):
+    """Gera prompts otimizados para o renderer escolhido. Aceita prompt_id para template customizado."""
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video or not video.selected_creative_pack_id:
         raise HTTPException(status_code=400, detail="Selecione um creative pack primeiro")
@@ -206,11 +216,30 @@ def generate_prompts(video_id: int, renderer: str = "seedance", db: Session = De
     ).first()
     product = db.query(Product).filter(Product.id == video.product_id).first()
 
+    # Buscar template customizado se fornecido
+    custom_template = None
+    if prompt_id:
+        from app.models import PromptTemplate
+        custom_template = db.query(PromptTemplate).filter(
+            PromptTemplate.id == prompt_id, PromptTemplate.active == True
+        ).first()
+        if not custom_template:
+            raise HTTPException(status_code=404, detail="Prompt template não encontrado")
+
     scenes = pack.script_json or []
     prompts = []
 
     for scene in scenes:
-        if renderer == "seedance":
+        if custom_template:
+            # Substituir variáveis no template
+            prompt = custom_template.content.replace(
+                "{{visual}}", scene.get("visual", "")
+            ).replace(
+                "{{product_name}}", product.name
+            ).replace(
+                "{{category}}", product.category
+            )
+        elif renderer == "seedance":
             prompt = (
                 f"{scene.get('visual', '')}. "
                 f"Vertical 9:16, realistic product video, {product.category.lower()}, "

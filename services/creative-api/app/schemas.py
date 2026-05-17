@@ -2,6 +2,36 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+# === Prompt Templates ===
+
+class PromptTemplateCreate(BaseModel):
+    type: str
+    name: str
+    content: str
+    variables: list[str] = []
+
+
+class PromptTemplateUpdate(BaseModel):
+    name: str | None = None
+    content: str | None = None
+    variables: list[str] | None = None
+    active: bool | None = None
+
+
+class PromptTemplateOut(BaseModel):
+    id: int
+    type: str
+    name: str
+    content: str
+    variables: list[str]
+    active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # === Products ===
 
 class ProductBase(BaseModel):

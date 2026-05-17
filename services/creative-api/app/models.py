@@ -8,6 +8,19 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+class PromptTemplate(Base):
+    __tablename__ = "prompt_templates"
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    variables = Column(ARRAY(String), default=[])
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ProductSearch(Base):
     __tablename__ = "product_searches"
 
