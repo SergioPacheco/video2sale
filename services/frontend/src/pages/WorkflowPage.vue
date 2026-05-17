@@ -11,12 +11,14 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
+import { FilterMatchMode } from '@primevue/core/api'
 import api from '../services/api'
 
 // === State ===
 const products = ref<any[]>([])
-const selectedProductId = ref<number | null>(null)
-const selectedProduct = computed(() => products.value.find(p => p.id === selectedProductId.value))
+const selectedRow = ref<any>(null)
+const selectedProduct = computed(() => selectedRow.value)
+const filters = ref({ global: { value: null, matchMode: FilterMatchMode.CONTAINS } })
 const winner = ref<any>(null)
 const video = ref<any>(null)
 const creativePacks = ref<any[]>([])
@@ -99,9 +101,9 @@ async function loadProducts() {
 
 // === Step 1: Create Video ===
 async function createVideo() {
-  if (!selectedProductId.value) return
+  if (!selectedRow.value) return
   loading.value = true
-  const { data } = await api.post('/videos', null, { params: { product_id: selectedProductId.value, week: week.value } })
+  const { data } = await api.post('/videos', null, { params: { product_id: selectedRow.value.id, week: week.value } })
   video.value = data
   loading.value = false
   advance('2')
@@ -207,25 +209,30 @@ onMounted(async () => {
         <!-- Step 1: Seleccionar Producto -->
         <StepPanel v-slot="{ activateCallback }" value="1">
           <div class="p-4">
-            <p class="text-gray-600 mb-4">Selecciona el producto para el vídeo de esta semana.</p>
-            <div class="mb-4">
-              <label class="block text-sm font-medium mb-1">Producto</label>
-              <Select v-model="selectedProductId" :options="products" optionLabel="name" optionValue="id" placeholder="Elige un producto..." filter class="w-96" />
+            <p class="text-gray-600 mb-4">Selecciona el producto para el vídeo.</p>
+            <DataTable :value="products" v-model:selection="selectedRow" selectionMode="single" dataKey="id"
+                       :globalFilterFields="['name', 'category']" v-model:filters="filters"
+                       stripedRows paginator :rows="8" size="small" sortField="total_score" :sortOrder="-1">
+              <template #header>
+                <InputText v-model="filters['global'].value" placeholder="Buscar producto..." class="w-64" />
+              </template>
+              <Column selectionMode="single" style="width: 3rem" />
+              <Column field="name" header="Nombre" sortable />
+              <Column field="category" header="Categoría" sortable />
+              <Column field="total_score" header="Score" sortable style="width: 6rem" />
+              <Column field="price" header="Precio" sortable style="width: 6rem">
+                <template #body="{ data }">{{ data.price ? `€${data.price}` : '—' }}</template>
+              </Column>
+              <Column header="Assets" style="width: 5rem">
+                <template #body="{ data }">
+                  <Tag v-if="data.assets?.length" :value="data.assets.length" severity="info" />
+                </template>
+              </Column>
+            </DataTable>
+            <div class="flex items-center gap-4 mt-4">
+              <Button label="Crear Vídeo" icon="pi pi-video" :disabled="!selectedRow" :loading="loading" @click="createVideo(); activateCallback('2')" />
+              <span v-if="selectedRow" class="text-sm text-gray-500">Seleccionado: <strong>{{ selectedRow.name }}</strong></span>
             </div>
-            <div v-if="selectedProduct" class="bg-gray-50 dark:bg-gray-700 border rounded-lg p-4 mb-4">
-              <p class="font-medium dark:text-white">{{ selectedProduct.name }}</p>
-              <p class="text-sm text-gray-500">{{ selectedProduct.category }} · Score: {{ selectedProduct.total_score }} · €{{ selectedProduct.price || '—' }}</p>
-              <div v-if="selectedProduct.assets?.length" class="mt-2">
-                <p class="text-xs font-medium text-gray-500 mb-1">📎 Materiales:</p>
-                <div class="flex flex-wrap gap-2">
-                  <a v-for="(asset, i) in selectedProduct.assets" :key="i" :href="asset.url" target="_blank"
-                     class="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
-                    {{ asset.label || asset.type }}
-                  </a>
-                </div>
-              </div>
-            </div>
-            <Button label="Crear Vídeo" icon="pi pi-video" :disabled="!selectedProductId" :loading="loading" @click="createVideo(); activateCallback('2')" />
           </div>
         </StepPanel>
 
