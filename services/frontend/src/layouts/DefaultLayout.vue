@@ -26,6 +26,10 @@ const { isDark, toggle } = useDarkMode()
           <Package :size="20" />
           <span>Productos</span>
         </RouterLink>
+        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <Settings :size="20" />
+          <span>Prompts</span>
+        </RouterLink>
         <RouterLink to="/ranking" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Trophy :size="20" />
           <span>Ranking</span>
@@ -49,10 +53,6 @@ const { isDark, toggle } = useDarkMode()
           <Moon v-else :size="20" />
           <span>{{ isDark ? 'Modo Claro' : 'Modo Oscuro' }}</span>
         </button>
-        <RouterLink to="/prompts" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <Settings :size="20" />
-          <span>Configuración</span>
-        </RouterLink>
       </div>
     </aside>
 
