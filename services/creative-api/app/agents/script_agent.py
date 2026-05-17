@@ -39,8 +39,9 @@ async def generate_creative_packs(product, video, custom_prompt=None) -> list[di
         f"Dolor principal: Problema que resuelve este producto en el día a día\n"
         f"Beneficios permitidos: Solo los que se pueden demostrar visualmente\n"
         f"Restricciones: No inventar características, no prometer resultados imposibles\n\n"
-        f"Genera 3 variaciones diferentes del paquete creativo. "
-        f"Devuelve un JSON array con 3 objetos."
+        f"Genera 3 variaciones diferentes del paquete creativo.\n"
+        f"Devuelve JSON con esta estructura exacta:\n"
+        f'{{"packs": [{{"hook": "texto del gancho", "scenes": [{{"start": 0, "end": 3, "text": "texto en pantalla", "voiceover": "narración", "visual": "descripción visual"}}], "caption": "texto para redes", "hashtags": ["tag1"], "affiliate_disclaimer": "aviso"}}]}}'
     )
 
     response = await _get_client().chat.completions.create(
@@ -56,6 +57,10 @@ async def generate_creative_packs(product, video, custom_prompt=None) -> list[di
     content = response.choices[0].message.content
     data = json.loads(content)
 
+    # Log para debug
+    print(f"[OPENAI] Raw response keys: {list(data.keys()) if isinstance(data, dict) else 'list'}")
+    print(f"[OPENAI] First item keys: {list(data[0].keys()) if isinstance(data, list) and data else list((data.get('packs') or data.get('variations') or [data])[0].keys()) if isinstance(data, dict) else 'N/A'}")
+
     # Normalizar: pode vir como {"packs": [...]} ou {"variations": [...]} ou [...]
     if isinstance(data, list):
         packs = data[:3]
@@ -70,6 +75,15 @@ async def generate_creative_packs(product, video, custom_prompt=None) -> list[di
     )
 
     for pack in packs:
+        # Normalizar scenes para sempre ser lista de dicts
+        scenes = pack.get("scenes") or pack.get("escenas") or []
+        normalized_scenes = []
+        for j, scene in enumerate(scenes):
+            if isinstance(scene, dict):
+                normalized_scenes.append(scene)
+            elif isinstance(scene, str):
+                normalized_scenes.append({"start": j*5, "end": (j+1)*5, "text": "", "voiceover": scene, "visual": scene})
+        pack["scenes"] = normalized_scenes
         pack["tokens_input"] = usage.prompt_tokens
         pack["tokens_output"] = usage.completion_tokens // len(packs)
         pack["cost"] = cost_per_pack

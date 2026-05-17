@@ -97,6 +97,10 @@ async function generateCreative() {
     const { data } = await api.post(`/videos/${video.value.id}/generate-creative`, null, { params })
     creativePacks.value = data
     addLog(`✓ ${data.length} roteiros generados`, 'success')
+    // Log detalhado de cada pack
+    for (const pack of data) {
+      addLog(`  Pack v${pack.version}: hook="${(pack.hook || '').substring(0, 50)}..." scenes=${pack.script_json?.length || 0} compliance=${pack.compliance_status}`)
+    }
     advance('3')
   } catch (e: any) {
     addLog(`✗ Error generando roteiros: ${e.response?.data?.detail || e.message}`, 'error')
@@ -114,6 +118,9 @@ async function runCompliance() {
     const { data } = await api.post(`/videos/${video.value.id}/compliance-check`)
     creativePacks.value = data
     addLog(`✓ Compliance verificado`, 'success')
+    for (const pack of data) {
+      addLog(`  Pack v${pack.version}: ${pack.compliance_status} ${pack.compliance_notes ? '— ' + pack.compliance_notes : ''}`)
+    }
     advance('4')
   } catch (e: any) {
     addLog(`✗ Error en compliance: ${e.response?.data?.detail || e.message}`, 'error')
