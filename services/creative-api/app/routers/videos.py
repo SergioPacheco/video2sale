@@ -99,8 +99,10 @@ async def generate_creative(video_id: int, prompt_id: int | None = None, db: Ses
         db.add(cp)
 
     video.status = "creative_generated"
+    if prompt_id:
+        video.script_prompt_id = prompt_id
     db.add(VideoEvent(video_id=video.id, event_type="creative_generated", actor="system",
-                      details={"variations": len(packs), "model": settings.openai_model}))
+                      details={"variations": len(packs), "model": settings.openai_model, "prompt_id": prompt_id}))
     db.commit()
 
     return db.query(VideoCreativePack).filter(VideoCreativePack.video_id == video_id).all()
@@ -263,8 +265,10 @@ def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int |
 
     video.renderer = renderer
     video.status = "prompts_ready"
+    if prompt_id:
+        video.renderer_prompt_id = prompt_id
     db.add(VideoEvent(video_id=video_id, event_type="prompts_generated", actor="system",
-                      details={"renderer": renderer, "scenes": len(prompts)}))
+                      details={"renderer": renderer, "scenes": len(prompts), "prompt_id": prompt_id}))
     db.commit()
 
     return {

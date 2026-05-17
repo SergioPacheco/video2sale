@@ -97,6 +97,8 @@ class Video(Base):
     thumbnail_path = Column(Text)
     renderer = Column(String, default="seedance")
     renderer_config = Column(JSONB)
+    script_prompt_id = Column(Integer, ForeignKey("prompt_templates.id"))
+    renderer_prompt_id = Column(Integer, ForeignKey("prompt_templates.id"))
     status = Column(String, default="pending_creative")
     total_cost = Column(Numeric(8, 4), default=0)
     created_at = Column(DateTime, default=datetime.utcnow)

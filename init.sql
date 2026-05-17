@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS videos (
     -- Renderer
     renderer TEXT DEFAULT 'seedance',
     renderer_config JSONB,
+    -- Prompt templates usados (rastreabilidade)
+    script_prompt_id INT REFERENCES prompt_templates(id),
+    renderer_prompt_id INT REFERENCES prompt_templates(id),
     -- Estado
     status TEXT DEFAULT 'pending_creative',
     -- Custo real acumulado

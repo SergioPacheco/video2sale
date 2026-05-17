@@ -102,6 +102,8 @@ class VideoOut(BaseModel):
     total_cost: float = 0
     voiceover_path: str | None = None
     video_path: str | None = None
+    script_prompt_id: int | None = None
+    renderer_prompt_id: int | None = None
     created_at: datetime
 
     class Config:
