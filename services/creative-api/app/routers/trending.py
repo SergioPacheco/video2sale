@@ -91,10 +91,32 @@ async def get_category_detail(category_id: str, name: str = "", country: str = "
     metrics = props.get("metrics", {})
 
     video_ids = info.get("posts", [])
-    videos = [
-        {"id": vid, "url": f"https://www.tiktok.com/@/video/{vid}"}
-        for vid in video_ids if isinstance(vid, str)
-    ]
+    videos = []
+    async with httpx.AsyncClient() as client:
+        for vid in video_ids[:10]:
+            if not isinstance(vid, str):
+                continue
+            url = f"https://www.tiktok.com/@/video/{vid}"
+            try:
+                resp = await client.get(
+                    "https://www.tiktok.com/oembed",
+                    params={"url": url},
+                    timeout=5,
+                )
+                if resp.status_code == 200:
+                    oembed = resp.json()
+                    videos.append({
+                        "id": vid,
+                        "url": url,
+                        "title": oembed.get("title", ""),
+                        "thumbnail": oembed.get("thumbnail_url", ""),
+                        "author": oembed.get("author_name", ""),
+                        "author_url": oembed.get("author_url", ""),
+                    })
+                else:
+                    videos.append({"id": vid, "url": url, "title": "", "thumbnail": "", "author": ""})
+            except Exception:
+                videos.append({"id": vid, "url": url, "title": "", "thumbnail": "", "author": ""})
 
     return {
         "name": category_name,

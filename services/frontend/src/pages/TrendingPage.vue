@@ -175,11 +175,17 @@ onMounted(loadTrending)
         <!-- Vídeos -->
         <div v-if="detail.videos.length">
           <h4 class="text-sm font-semibold mb-2">🎬 Vídeos de ejemplo ({{ detail.videos.length }})</h4>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="flex gap-3 overflow-x-auto pb-2">
             <a v-for="v in detail.videos" :key="v.id" :href="v.url" target="_blank"
-               class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
-              <span class="pi pi-external-link text-blue-500"></span>
-              <span class="text-sm text-blue-600 dark:text-blue-400 font-mono truncate">{{ v.id }}</span>
+               class="shrink-0 w-36 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:ring-2 hover:ring-blue-400 transition-all">
+              <img v-if="v.thumbnail" :src="v.thumbnail" class="w-full h-48 object-cover" />
+              <div v-else class="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span class="pi pi-video text-2xl text-gray-400"></span>
+              </div>
+              <div class="p-2">
+                <p class="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{{ v.title || 'Ver vídeo' }}</p>
+                <p v-if="v.author" class="text-xs text-gray-400 mt-1">@{{ v.author }}</p>
+              </div>
             </a>
           </div>
         </div>
