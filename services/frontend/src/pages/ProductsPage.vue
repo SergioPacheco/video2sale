@@ -19,7 +19,9 @@ const editing = ref(false)
 const emptyForm = {
   id: 0, name: '', category: '', source: 'TikTok Shop',
   product_url: '', affiliate_url: '', image_url: '',
-  price: null as number | null, notes: '',
+  price: null as number | null, notes: '', description: '',
+  commission_rate: null as number | null, seller_name: '', seller_url: '',
+  accepts_affiliates: false,
   pain_score: 0, visual_score: 0, trend_score: 0, demo_score: 0, impulse_buy_score: 0,
   assets: [] as { url: string; type: string; label: string }[],
 }
@@ -67,6 +69,11 @@ async function save() {
     image_url: form.value.image_url || null,
     price: form.value.price,
     notes: form.value.notes || null,
+    description: form.value.description || null,
+    commission_rate: form.value.commission_rate,
+    seller_name: form.value.seller_name || null,
+    seller_url: form.value.seller_url || null,
+    accepts_affiliates: form.value.accepts_affiliates,
     pain_score: form.value.pain_score,
     visual_score: form.value.visual_score,
     trend_score: form.value.trend_score,
@@ -122,6 +129,12 @@ onMounted(loadProducts)
           <span v-else class="text-gray-400 text-sm">—</span>
         </template>
       </Column>
+      <Column header="Afiliado" style="width: 5rem">
+        <template #body="{ data }">
+          <Tag v-if="data.accepts_affiliates" value="✓" severity="success" />
+          <span v-else class="text-gray-400 text-sm">—</span>
+        </template>
+      </Column>
       <Column header="Acciones" style="width: 8rem">
         <template #body="{ data }">
           <div class="flex gap-2">
@@ -160,6 +173,34 @@ onMounted(loadProducts)
             <label class="block text-sm font-medium mb-1">URL Afiliado</label>
             <InputText v-model="form.affiliate_url" class="w-full" placeholder="https://..." />
           </div>
+        </div>
+
+        <!-- Afiliado -->
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Comisión (%)</label>
+            <InputNumber v-model="form.commission_rate" class="w-full" :min="0" :max="80" suffix="%" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Seller / Tienda</label>
+            <InputText v-model="form.seller_name" class="w-full" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">URL Tienda</label>
+            <InputText v-model="form.seller_url" class="w-full" placeholder="https://..." />
+          </div>
+          <div class="flex items-end pb-1">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="form.accepts_affiliates" class="w-4 h-4" />
+              <span class="text-sm">Acepta afiliados</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Descripción del producto</label>
+          <Textarea v-model="form.description" rows="3" class="w-full" placeholder="Descripción completa, beneficios, características..." />
         </div>
 
         <!-- Scores -->

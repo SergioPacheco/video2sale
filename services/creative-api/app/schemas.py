@@ -56,6 +56,11 @@ class ProductBase(BaseModel):
     impulse_buy_score: int = 0
     commission_estimate: float = 0
     notes: str | None = None
+    description: str | None = None
+    commission_rate: float | None = None
+    seller_name: str | None = None
+    seller_url: str | None = None
+    accepts_affiliates: bool = False
     assets: list[dict] | None = []
 
 

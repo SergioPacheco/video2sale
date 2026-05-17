@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS products (
     total_score NUMERIC(5,2) DEFAULT 0,
     -- Meta
     notes TEXT,
+    description TEXT,                          -- descrição completa do produto
+    commission_rate NUMERIC(5,2),              -- % comissão de afiliado
+    seller_name TEXT,                          -- nome da loja/seller
+    seller_url TEXT,                           -- link da loja
+    accepts_affiliates BOOLEAN DEFAULT FALSE,  -- aceita afiliados?
     assets JSONB DEFAULT '[]',                 -- [{url, type, label}] links de imagens/materiais para vídeo
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
