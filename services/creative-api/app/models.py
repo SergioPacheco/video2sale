@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Text, Numeric, Boolean, DateTime, ForeignKey, JSON,
 )
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -82,7 +83,7 @@ class Video(Base):
     video_path = Column(Text)
     thumbnail_path = Column(Text)
     renderer = Column(String, default="seedance")
-    renderer_config = Column(JSON)
+    renderer_config = Column(JSONB)
     status = Column(String, default="pending_creative")
     total_cost = Column(Numeric(8, 4), default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -100,9 +101,9 @@ class VideoCreativePack(Base):
     video_id = Column(Integer, ForeignKey("videos.id"))
     version = Column(Integer, default=1)
     hook = Column(Text)
-    script_json = Column(JSON)
+    script_json = Column(JSONB)
     caption = Column(Text)
-    hashtags = Column(JSON)
+    hashtags = Column(ARRAY(String))
     affiliate_disclaimer = Column(Text)
     compliance_status = Column(String, default="pending")
     compliance_notes = Column(Text)
@@ -123,7 +124,7 @@ class VideoEvent(Base):
     video_id = Column(Integer, ForeignKey("videos.id"))
     event_type = Column(String, nullable=False)
     actor = Column(String, default="system")
-    details = Column(JSON)
+    details = Column(JSONB)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     video = relationship("Video", back_populates="events")

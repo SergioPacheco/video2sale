@@ -1,26 +1,17 @@
 import os
-os.environ["DATABASE_URL"] = "sqlite://"
-os.environ["OPENAI_API_KEY"] = "test-key"
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+os.environ.setdefault("OPENAI_API_KEY", "test-key")
+os.environ.setdefault("DATABASE_URL", "postgresql://avf:avf@postgres:5432/avf")
 
 from app.database import Base, get_db
 from app.main import app
 
-# SQLite in-memory com conexão compartilhada
-engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
-
-
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=OFF")
-    cursor.close()
-
-
+DATABASE_URL = os.environ["DATABASE_URL"]
+engine = create_engine(DATABASE_URL)
 TestSession = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 
@@ -28,7 +19,11 @@ TestSession = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 def setup_db():
     Base.metadata.create_all(bind=engine)
     yield
-    Base.metadata.drop_all(bind=engine)
+    # Limpar dados após cada teste
+    with engine.connect() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())
+        conn.commit()
 
 
 @pytest.fixture

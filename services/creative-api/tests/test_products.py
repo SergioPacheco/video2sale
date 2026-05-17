@@ -1,11 +1,5 @@
 import io
 
-import pytest
-
-needs_db = pytest.mark.skipif(
-    True, reason="Testes de integração requerem PostgreSQL (docker compose up)"
-)
-
 
 def test_health(client):
     resp = client.get("/health")
@@ -13,7 +7,6 @@ def test_health(client):
     assert resp.json()["status"] == "ok"
 
 
-@needs_db
 def test_import_csv(client):
     csv_content = (
         "name,category,source,price,pain_score,visual_score,trend_score,"
@@ -31,14 +24,12 @@ def test_import_csv(client):
     assert data["source"] == "manual_csv"
 
 
-@needs_db
 def test_list_products_empty(client):
     resp = client.get("/products/")
     assert resp.status_code == 200
     assert resp.json() == []
 
 
-@needs_db
 def test_list_products_after_import(client):
     csv_content = (
         "name,category,pain_score,visual_score,demo_score,impulse_buy_score,"
@@ -57,7 +48,6 @@ def test_list_products_after_import(client):
     assert products[0]["total_score"] > 0
 
 
-@needs_db
 def test_get_product_not_found(client):
     resp = client.get("/products/999")
     assert resp.status_code == 404
