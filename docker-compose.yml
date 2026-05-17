@@ -71,6 +71,15 @@ services:
       - ./output:/output
       - ./docker-data/piper-models:/models
 
+  # === FRONTEND (Vue 3 + PrimeVue) ===
+  frontend:
+    build: ./services/frontend
+    container_name: avf-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - creative-api
+
   # === REMOTION RENDERER ===
   remotion-renderer:
     build: ./services/remotion-renderer
