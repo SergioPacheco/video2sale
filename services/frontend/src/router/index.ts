@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/videos/:id', name: 'video-detail', component: () => import('../pages/VideoDetailPage.vue') },
     { path: '/prompts', name: 'prompts', component: () => import('../pages/PromptsPage.vue') },
     { path: '/metrics', name: 'metrics', component: () => import('../pages/MetricsPage.vue') },
+    { path: '/trending', name: 'trending', component: () => import('../pages/TrendingPage.vue') },
     { path: '/guide', name: 'guide', component: () => import('../pages/GuidePage.vue') },
   ],
 })

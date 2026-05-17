@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Package, Video, Trophy, BarChart3, Wand2, Settings, Moon, Sun, TrendingUp, BookOpen } from 'lucide-vue-next'
+import { Package, Video, Trophy, BarChart3, Wand2, Settings, Moon, Sun, TrendingUp, BookOpen, Flame } from 'lucide-vue-next'
 import { useDarkMode } from '../composables/useDarkMode'
 
 const { isDark, toggle } = useDarkMode()
@@ -17,6 +17,10 @@ const { isDark, toggle } = useDarkMode()
         <RouterLink to="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <BarChart3 :size="20" />
           <span>Dashboard</span>
+        </RouterLink>
+        <RouterLink to="/trending" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <Flame :size="20" />
+          <span>Trending</span>
         </RouterLink>
         <RouterLink to="/workflow" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
           <Wand2 :size="20" />
