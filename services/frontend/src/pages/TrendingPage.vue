@@ -54,6 +54,19 @@ async function openDetail(product: any) {
   })
   detail.value = data
   detailLoading.value = false
+
+  // Carregar thumbnails em background
+  for (const v of data.videos) {
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(v.url)}`)
+      .then(r => r.json())
+      .then(d => {
+        v.thumbnail = d.thumbnail_url || ''
+        v.title = d.title || ''
+        v.author = d.author_name || ''
+        detail.value = { ...detail.value }
+      })
+      .catch(() => {})
+  }
 }
 
 async function importSelected() {
