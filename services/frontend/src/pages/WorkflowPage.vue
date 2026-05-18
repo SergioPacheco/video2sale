@@ -37,6 +37,23 @@ function addLog(msg: string, type = 'info') {
   logs.value.push({ time, msg, type })
 }
 
+// Interceptor para logar requests e responses
+api.interceptors.request.use((config) => {
+  addLog(`→ ${config.method?.toUpperCase()} ${config.url}`)
+  return config
+})
+api.interceptors.response.use(
+  (response) => {
+    const size = JSON.stringify(response.data).length
+    addLog(`← ${response.status} (${size} bytes)`, 'success')
+    return response
+  },
+  (error) => {
+    addLog(`← ERROR ${error.response?.status || 'timeout'}: ${error.response?.data?.detail || error.message}`, 'error')
+    return Promise.reject(error)
+  }
+)
+
 const activeStep = ref('1')
 function advance(step: string) { activeStep.value = step }
 
@@ -208,17 +225,27 @@ onMounted(async () => {
         <StepPanel v-slot="{ activateCallback }" value="2">
           <div class="p-4">
             <p class="text-gray-600 mb-4">Genera 3 variaciones de roteiro creativo.</p>
+
+            <!-- Prompt selecionado -->
+            <div v-if="selectedScriptPromptId" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+              <p class="text-xs font-semibold text-blue-700 dark:text-blue-300">📝 Prompt: {{ scriptPrompts.find(p => p.id === selectedScriptPromptId)?.name }}</p>
+            </div>
+
+            <!-- Preview -->
             <div v-if="showPreview" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <p class="text-xs font-semibold text-yellow-700 mb-2">👁️ Preview del prompt:</p>
               <pre class="text-xs text-yellow-900 whitespace-pre-wrap font-mono max-h-48 overflow-auto">{{ previewContent }}</pre>
             </div>
+
             <div class="flex gap-4 items-end mb-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Prompt Template</label>
-                <Select v-model="selectedScriptPromptId" :options="scriptPrompts" optionLabel="name" optionValue="id" placeholder="Default" showClear class="w-64" />
+                <Select v-model="selectedScriptPromptId" :options="scriptPrompts" optionLabel="name" optionValue="id" placeholder="Default (primer activo)" showClear class="w-64" />
               </div>
-              <Button label="Generar Roteiros" icon="pi pi-sparkles" :loading="loading" @click="generateCreative(); activateCallback('3')" />
+              <Button label="Generar Roteiros" icon="pi pi-sparkles" :loading="loading" @click="generateCreative()" />
             </div>
+
+            <!-- Resultado -->
             <DataTable v-if="creativePacks.length" :value="creativePacks" size="small">
               <Column field="version" header="V" style="width: 3rem" />
               <Column field="hook" header="Gancho" />
@@ -228,6 +255,9 @@ onMounted(async () => {
                 </template>
               </Column>
             </DataTable>
+            <div v-if="creativePacks.length" class="flex justify-end mt-4">
+              <Button label="Siguiente → Compliance" icon="pi pi-arrow-right" iconPos="right" @click="activateCallback('3'); activeStep = '3'" />
+            </div>
           </div>
         </StepPanel>
 
@@ -235,7 +265,7 @@ onMounted(async () => {
         <StepPanel v-slot="{ activateCallback }" value="3">
           <div class="p-4">
             <p class="text-gray-600 mb-4">Valida los roteiros contra reglas de compliance.</p>
-            <Button label="Verificar Compliance" icon="pi pi-shield" :loading="loading" @click="runCompliance(); activateCallback('4')" class="mb-4" />
+            <Button label="Verificar Compliance" icon="pi pi-shield" :loading="loading" @click="runCompliance()" class="mb-4" />
             <DataTable v-if="creativePacks.length" :value="creativePacks" size="small">
               <Column field="version" header="V" style="width: 3rem" />
               <Column field="hook" header="Gancho" />
@@ -246,6 +276,9 @@ onMounted(async () => {
               </Column>
               <Column field="compliance_notes" header="Notas" />
             </DataTable>
+            <div class="flex justify-end mt-4">
+              <Button label="Siguiente → Seleccionar" icon="pi pi-arrow-right" iconPos="right" :disabled="!creativePacks.some(p => p.compliance_status)" @click="activateCallback('4'); activeStep = '4'" />
+            </div>
           </div>
         </StepPanel>
 
@@ -320,12 +353,13 @@ onMounted(async () => {
     </Stepper>
 
     <!-- Log Panel -->
-    <div v-if="logs.length" class="mt-6 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div class="mt-6 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-4 py-2">
-        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">📋 Log</span>
+        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">📋 Log (requests & responses)</span>
         <button @click="logs = []" class="text-xs text-gray-400 hover:text-red-500">Limpiar</button>
       </div>
-      <div class="max-h-40 overflow-auto p-3 bg-gray-50 dark:bg-gray-900 font-mono text-xs space-y-1">
+      <div class="h-48 overflow-auto p-3 bg-gray-50 dark:bg-gray-900 font-mono text-xs space-y-1">
+        <div v-if="!logs.length" class="text-gray-400">Esperando acciones...</div>
         <div v-for="(log, i) in logs" :key="i" :class="log.type === 'error' ? 'text-red-500' : log.type === 'success' ? 'text-green-600' : 'text-gray-500'">
           <span class="text-gray-400">{{ log.time }}</span> {{ log.msg }}
         </div>
