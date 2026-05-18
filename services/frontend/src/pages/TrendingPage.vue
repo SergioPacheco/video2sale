@@ -57,12 +57,11 @@ async function openDetail(product: any) {
 
   // Carregar thumbnails em background
   for (const v of data.videos) {
-    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(v.url)}`)
-      .then(r => r.json())
-      .then(d => {
-        v.thumbnail = d.thumbnail_url || ''
+    api.get(`/tiktok-trending/oembed/${v.id}`)
+      .then(({ data: d }) => {
+        v.thumbnail = d.thumbnail || ''
         v.title = d.title || ''
-        v.author = d.author_name || ''
+        v.author = d.author || ''
         detail.value = { ...detail.value }
       })
       .catch(() => {})

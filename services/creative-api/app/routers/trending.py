@@ -65,6 +65,18 @@ async def list_trending(country: str = "ES", period: int = Query(7, enum=[7, 30]
     ]
 
 
+@router.get("/oembed/{video_id}")
+async def get_oembed(video_id: str):
+    """Proxy para TikTok oEmbed (evita CORS)."""
+    url = f"https://www.tiktok.com/@/video/{video_id}"
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://www.tiktok.com/oembed", params={"url": url}, timeout=5)
+    if resp.status_code == 200:
+        data = resp.json()
+        return {"thumbnail": data.get("thumbnail_url", ""), "title": data.get("title", ""), "author": data.get("author_name", "")}
+    return {"thumbnail": "", "title": "", "author": ""}
+
+
 @router.get("/detail/{category_id}")
 async def get_category_detail(category_id: str, name: str = "", country: str = "ES", period: int = 7):
     """Detalhe de uma categoria: hashtags, audience, vídeos de exemplo, métricas diárias."""
