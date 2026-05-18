@@ -194,7 +194,7 @@ onMounted(async () => {
   <div>
     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Workflow — Crear Vídeo</h2>
 
-    <Stepper :value="activeStep">
+    <Stepper v-model:value="activeStep">
       <StepList>
         <Step value="1">Producto</Step>
         <Step value="2">Roteiro</Step>
