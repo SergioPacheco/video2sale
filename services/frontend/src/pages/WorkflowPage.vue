@@ -114,13 +114,23 @@ async function generateCreative() {
     const { data } = await api.post(`/videos/${video.value.id}/generate-creative`, null, { params })
     creativePacks.value = data
     addLog(`✓ ${data.length} roteiros generados`, 'success')
-    // Log detalhado de cada pack
     for (const pack of data) {
-      addLog(`  Pack v${pack.version}: hook="${(pack.hook || '').substring(0, 50)}..." scenes=${pack.script_json?.length || 0} compliance=${pack.compliance_status}`)
+      addLog(`  Pack v${pack.version}: hook="${(pack.hook || '').substring(0, 50)}..." scenes=${pack.script_json?.length || 0}`)
     }
-    advance('3')
+
+    // Compliance automático
+    addLog('Verificando compliance...')
+    const { data: checked } = await api.post(`/videos/${video.value.id}/compliance-check`)
+    creativePacks.value = checked
+    addLog(`✓ Compliance verificado`, 'success')
+    for (const pack of checked) {
+      addLog(`  Pack v${pack.version}: ${pack.compliance_status} ${pack.compliance_notes ? '— ' + pack.compliance_notes : ''}`)
+    }
+
+    // Ir direto para Seleccionar
+    advance('4')
   } catch (e: any) {
-    addLog(`✗ Error generando roteiros: ${e.response?.data?.detail || e.message}`, 'error')
+    addLog(`✗ Error: ${e.response?.data?.detail || e.message}`, 'error')
   }
   loading.value = false
   showPreview.value = false
@@ -256,7 +266,6 @@ onMounted(async () => {
               </Column>
             </DataTable>
             <div v-if="creativePacks.length" class="flex justify-end mt-4">
-              <Button label="Siguiente → Compliance" icon="pi pi-arrow-right" iconPos="right" @click="activateCallback('3'); activeStep = '3'" />
             </div>
           </div>
         </StepPanel>
