@@ -134,7 +134,7 @@ onMounted(loadVideo)
       <!-- Video final (si existe) -->
       <div v-if="video.video_path" class="mb-4">
         <video controls class="w-full max-w-sm rounded-lg mx-auto bg-black aspect-[9/16]">
-          <source :src="video.video_path" type="video/mp4" />
+          <source :src="'/api' + video.video_path" type="video/mp4" />
         </video>
       </div>
 
@@ -142,7 +142,7 @@ onMounted(loadVideo)
       <div v-if="video.voiceover_path" class="mb-4">
         <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">🔊 Voiceover</p>
         <audio controls class="w-full">
-          <source :src="video.voiceover_path" type="audio/mpeg" />
+          <source :src="'/api' + video.voiceover_path" type="audio/mpeg" />
         </audio>
       </div>
 
