@@ -95,6 +95,16 @@ async function deleteProduct(id: number) {
   await loadProducts()
 }
 
+async function fetchImages(id: number) {
+  await api.post(`/products/${id}/fetch-images`)
+  await loadProducts()
+}
+
+async function quickGenerate(id: number) {
+  await api.post('/pipeline/full', null, { params: { product_id: id } })
+  await loadProducts()
+}
+
 async function onUpload(event: any) {
   const file = event.files[0]
   const formData = new FormData()
@@ -117,6 +127,12 @@ onMounted(loadProducts)
     </div>
 
     <DataTable :value="products" :loading="loading" stripedRows paginator :rows="10">
+      <Column header="" style="width: 4rem">
+        <template #body="{ data }">
+          <img v-if="data.image_url" :src="data.image_url" class="w-10 h-10 rounded object-cover" />
+          <div v-else class="w-10 h-10 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400">📦</div>
+        </template>
+      </Column>
       <Column field="name" header="Nombre" sortable />
       <Column field="category" header="Categoría" sortable />
       <Column field="total_score" header="Score" sortable />
@@ -135,9 +151,11 @@ onMounted(loadProducts)
           <span v-else class="text-gray-400 text-sm">—</span>
         </template>
       </Column>
-      <Column header="Acciones" style="width: 8rem">
+      <Column header="Acciones" style="width: 12rem">
         <template #body="{ data }">
-          <div class="flex gap-2">
+          <div class="flex gap-1">
+            <Button icon="pi pi-images" size="small" text v-tooltip="'Buscar imágenes'" @click="fetchImages(data.id)" />
+            <Button icon="pi pi-video" size="small" text severity="success" v-tooltip="'Generar vídeo'" @click="quickGenerate(data.id)" />
             <Button icon="pi pi-pencil" size="small" text @click="openEdit(data)" />
             <Button icon="pi pi-trash" size="small" text severity="danger" @click="deleteProduct(data.id)" />
           </div>
