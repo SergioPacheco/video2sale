@@ -12,10 +12,19 @@ const router = useRouter()
 const products = ref<any[]>([])
 const selectedProductId = ref<number | null>(null)
 const batchCount = ref(1)
+const selectedLanguage = ref('es-ES')
 const generating = ref(false)
 const result = ref<any>(null)
 const error = ref<string | null>(null)
 const progress = ref<string[]>([])
+
+const languages = [
+  { label: '🇬🇧 English', value: 'en-US' },
+  { label: '🇪🇸 Español', value: 'es-ES' },
+  { label: '🇧🇷 Português', value: 'pt-BR' },
+  { label: '🇫🇷 Français', value: 'fr-FR' },
+  { label: '🇩🇪 Deutsch', value: 'de-DE' },
+]
 
 // Actions
 async function generate() {
@@ -25,7 +34,7 @@ async function generate() {
   progress.value = ['Iniciando pipeline...']
 
   try {
-    const params: any = {}
+    const params: any = { language: selectedLanguage.value }
     if (selectedProductId.value) params.product_id = selectedProductId.value
 
     if (batchCount.value > 1) {
@@ -103,6 +112,23 @@ onMounted(loadProducts)
           </template>
         </Select>
         <p class="text-xs text-gray-400 mt-1">Vacío = sistema elige el mejor producto.</p>
+      </div>
+
+      <!-- Cantidad -->
+      <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Idioma</label>
+            <p class="text-xs text-gray-400">Idioma del roteiro y narración</p>
+          </div>
+          <Select
+            v-model="selectedLanguage"
+            :options="languages"
+            optionLabel="label"
+            optionValue="value"
+            class="w-48"
+          />
+        </div>
       </div>
 
       <!-- Cantidad -->

@@ -24,12 +24,12 @@ rebuild:
 
 # Gerar 1 vídeo (produto automático)
 generate:
-	curl -s -X POST http://localhost:8000/pipeline/full | python3 -m json.tool
+	curl -s -X POST http://localhost:8090/pipeline/full | python3 -m json.tool
 
 # Gerar N vídeos
 batch:
-	curl -s -X POST "http://localhost:8000/pipeline/batch?count=3" | python3 -m json.tool
+	curl -s -X POST "http://localhost:8090/pipeline/batch?count=3" | python3 -m json.tool
 
 # Health check
 health:
-	curl -s http://localhost:8000/health | python3 -m json.tool
+	curl -s http://localhost:8090/health | python3 -m json.tool

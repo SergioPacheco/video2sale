@@ -19,10 +19,14 @@ from app.config import settings
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 
+SUPPORTED_LANGUAGES = ["en-US", "es-ES", "pt-BR", "fr-FR", "de-DE"]
+
+
 @router.post("/full")
 async def run_full_pipeline(
     product_id: int | None = None,
     week: str | None = None,
+    language: str = "es-ES",
     db: Session = Depends(get_db),
 ):
     """Pipeline completo: produto → vídeo MP4 renderizado.
@@ -76,7 +80,7 @@ async def run_full_pipeline(
             PromptTemplate.type == "script_agent", PromptTemplate.active == True
         ).first()
 
-        packs_data = await generate_creative_packs(product, video, custom_prompt=prompt_tpl)
+        packs_data = await generate_creative_packs(product, video, custom_prompt=prompt_tpl, language=language)
 
         packs = []
         for i, pd in enumerate(packs_data, 1):
@@ -165,6 +169,7 @@ async def run_full_pipeline(
                 steps.append({"step": "images_fetched", "count": len(image_urls)})
 
         # === 8. Render (ffmpeg) ===
+        render_result = render_video(
             scenes=scenes,
             voiceover_path=voiceover_path,
             image_urls=image_urls,
@@ -223,6 +228,7 @@ async def run_full_pipeline(
 async def run_batch(
     count: int = 3,
     week: str | None = None,
+    language: str = "es-ES",
     db: Session = Depends(get_db),
 ):
     """Gera N vídeos para os top N produtos."""
@@ -237,7 +243,7 @@ async def run_batch(
     results = []
     for product in products:
         try:
-            r = await run_full_pipeline(product_id=product.id, week=week, db=db)
+            r = await run_full_pipeline(product_id=product.id, week=week, language=language, db=db)
             results.append(r)
         except Exception as e:
             results.append({"status": "error", "product_id": product.id, "error": str(e)})

@@ -12,7 +12,16 @@ def _get_client():
     return AsyncOpenAI(api_key=settings.openai_api_key, timeout=120)
 
 
-async def generate_creative_packs(product, video, custom_prompt=None) -> list[dict]:
+LANGUAGE_NAMES = {
+    "en-US": "English",
+    "es-ES": "Español de España",
+    "pt-BR": "Português do Brasil",
+    "fr-FR": "Français",
+    "de-DE": "Deutsch",
+}
+
+
+async def generate_creative_packs(product, video, custom_prompt=None, language: str = "es-ES") -> list[dict]:
     """Gera 3 variações de roteiro para um produto."""
     if custom_prompt:
         # Substituir variáveis no template customizado
@@ -32,11 +41,14 @@ async def generate_creative_packs(product, video, custom_prompt=None) -> list[di
     else:
         system_prompt = PROMPT_PATH.read_text()
 
+    lang_name = LANGUAGE_NAMES.get(language, language)
     user_prompt = (
         f"Producto: {product.name}\n"
         f"Categoría: {product.category}\n"
         f"Descripción: {product.notes or product.name}\n"
-        f"Público: Personas en España que buscan soluciones prácticas\n"
+        f"Idioma del vídeo: {lang_name}\n"
+        f"IMPORTANTE: Todo el contenido (hook, voiceover, text, caption, hashtags) DEBE estar en {lang_name}.\n"
+        f"Público: Personas que buscan soluciones prácticas\n"
         f"Dolor principal: Problema que resuelve este producto en el día a día\n"
         f"Beneficios permitidos: Solo los que se pueden demostrar visualmente\n"
         f"Restricciones: No inventar características, no prometer resultados imposibles\n\n"

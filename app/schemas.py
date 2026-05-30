@@ -2,6 +2,28 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+# === Integrations ===
+
+class IntegrationOut(BaseModel):
+    id: int
+    provider: str
+    status: str
+    last_used_at: datetime | None = None
+    last_error: str | None = None
+    config: dict = {}
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class IntegrationUpdate(BaseModel):
+    api_key: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
+    config: dict | None = None
+
+
 # === Prompt Templates ===
 
 class PromptTemplateCreate(BaseModel):
@@ -27,6 +49,47 @@ class PromptTemplateOut(BaseModel):
     active: bool
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# === Generation Presets ===
+
+class PresetCreate(BaseModel):
+    name: str
+    engine: str = "ffmpeg"
+    template: str = "producto_destaque"
+    voice: str = "nova"
+    language: str = "es-ES"
+    target_duration: int = 30
+    music_mode: str = "auto"
+    variations_count: int = 3
+    is_default: bool = False
+
+
+class PresetOut(PresetCreate):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# === Projects ===
+
+class ProjectCreate(BaseModel):
+    name: str
+    description: str | None = None
+    target_videos: int = 5
+    target_platform: str = "tiktok"
+    config: dict = {}
+
+
+class ProjectOut(ProjectCreate):
+    id: int
+    status: str = "active"
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -68,7 +131,6 @@ class ProductOut(ProductBase):
     id: int
     total_score: float = 0
     active: bool = True
-    assets: list[dict] | None = []
     created_at: datetime
 
     class Config:
@@ -81,10 +143,39 @@ class ProductImportResponse(BaseModel):
     search_id: int
 
 
+# === Assets ===
+
+class AssetCreate(BaseModel):
+    product_id: int
+    type: str
+    url: str
+    source: str = "manual"
+    label: str | None = None
+
+
+class AssetOut(BaseModel):
+    id: int
+    product_id: int
+    type: str
+    url: str
+    local_path: str | None = None
+    source: str
+    label: str | None = None
+    width: int | None = None
+    height: int | None = None
+    duration_seconds: float | None = None
+    used_in_videos: int = 0
+    active: bool = True
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # === Weekly Winner ===
 
 class WeeklyWinnerRequest(BaseModel):
-    week: str  # '2026-W21'
+    week: str
 
 
 class WeeklyWinnerOut(BaseModel):
@@ -102,15 +193,16 @@ class WeeklyWinnerOut(BaseModel):
 class VideoOut(BaseModel):
     id: int
     product_id: int
+    project_id: int | None = None
+    preset_id: int | None = None
     week: str
     template: str | None = None
-    renderer: str = "seedance"
+    renderer: str = "ffmpeg"
     status: str
     total_cost: float = 0
     voiceover_path: str | None = None
     video_path: str | None = None
-    script_prompt_id: int | None = None
-    renderer_prompt_id: int | None = None
+    thumbnail_path: str | None = None
     created_at: datetime
 
     class Config:
@@ -149,3 +241,60 @@ class VideoEventOut(BaseModel):
 class VideoDetailOut(VideoOut):
     creative_packs: list[CreativePackOut] = []
     events: list[VideoEventOut] = []
+
+
+# === Video Renders ===
+
+class RenderOut(BaseModel):
+    id: int
+    video_id: int
+    engine: str
+    template: str | None = None
+    voice: str = "nova"
+    language: str = "es-ES"
+    target_duration: int = 30
+    video_path: str | None = None
+    thumbnail_path: str | None = None
+    duration_seconds: float | None = None
+    total_cost: float = 0
+    status: str = "pending"
+    error_message: str | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# === Publications ===
+
+class PublicationCreate(BaseModel):
+    video_id: int
+    render_id: int | None = None
+    platform: str
+    account_name: str | None = None
+    caption_used: str | None = None
+    hashtags_used: list[str] | None = None
+    scheduled_at: datetime | None = None
+
+
+class PublicationOut(BaseModel):
+    id: int
+    video_id: int
+    render_id: int | None = None
+    platform: str
+    account_name: str | None = None
+    external_id: str | None = None
+    external_url: str | None = None
+    caption_used: str | None = None
+    hashtags_used: list[str] | None = None
+    status: str = "draft"
+    views: int = 0
+    likes: int = 0
+    comments: int = 0
+    shares: int = 0
+    saves: int = 0
+    published_at: datetime | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

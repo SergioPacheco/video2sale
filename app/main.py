@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import products, videos, prompts, stats, metrics, trending, pipeline
+from app.routers import (
+    products, videos, prompts, stats, metrics, trending, pipeline,
+    integrations, presets, projects, assets, renders, publications, tiktok,
+)
 
 app = FastAPI(
     title="Video2Sale",
@@ -25,6 +28,13 @@ app.include_router(prompts.router)
 app.include_router(stats.router)
 app.include_router(metrics.router)
 app.include_router(trending.router)
+app.include_router(integrations.router)
+app.include_router(presets.router)
+app.include_router(projects.router)
+app.include_router(assets.router)
+app.include_router(renders.router)
+app.include_router(publications.router)
+app.include_router(tiktok.router)
 
 
 @app.get("/health")
