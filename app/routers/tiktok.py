@@ -16,18 +16,36 @@ router = APIRouter(prefix="/tiktok", tags=["tiktok"])
 TIKTOK_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 TIKTOK_API = "https://open.tiktokapis.com/v2"
-REDIRECT_URI = "http://localhost:8090/tiktok/callback"
+REDIRECT_URI = "https://sergiopacheco.github.io/video2sale/callback"
+
+
+import hashlib
+import base64
+import secrets
+
+# PKCE state storage (em produção usar Redis/DB)
+_pkce_store: dict = {}
 
 
 @router.get("/login")
 async def tiktok_login():
-    """Redireciona para TikTok OAuth (Login Kit). Usuário autoriza a app."""
+    """Redireciona para TikTok OAuth (Login Kit) com PKCE."""
+    # Gerar code_verifier e code_challenge (PKCE S256)
+    code_verifier = secrets.token_urlsafe(43)
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b"=").decode()
+
+    _pkce_store["code_verifier"] = code_verifier
+
     params = {
         "client_key": settings.tiktok_client_key,
         "scope": "user.info.basic,video.upload",
         "response_type": "code",
         "redirect_uri": REDIRECT_URI,
         "state": "video2sale",
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
     url = TIKTOK_AUTH_URL + "?" + "&".join(f"{k}={v}" for k, v in params.items())
     return RedirectResponse(url)
@@ -35,7 +53,9 @@ async def tiktok_login():
 
 @router.get("/callback")
 async def tiktok_callback(code: str, state: str = "", db: Session = Depends(get_db)):
-    """Callback do OAuth. Troca code por access_token."""
+    """Callback do OAuth. Troca code por access_token com PKCE."""
+    code_verifier = _pkce_store.pop("code_verifier", "")
+
     async with httpx.AsyncClient() as client:
         resp = await client.post(TIKTOK_TOKEN_URL, data={
             "client_key": settings.tiktok_client_key,
@@ -43,6 +63,7 @@ async def tiktok_callback(code: str, state: str = "", db: Session = Depends(get_
             "code": code,
             "grant_type": "authorization_code",
             "redirect_uri": REDIRECT_URI,
+            "code_verifier": code_verifier,
         }, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=15)
 
     data = resp.json()
