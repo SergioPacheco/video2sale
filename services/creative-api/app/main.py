@@ -1,12 +1,24 @@
 from fastapi import FastAPI
-from app.routers import products, videos, prompts, stats, metrics, trending
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.routers import products, videos, prompts, stats, metrics, trending, pipeline
 
 app = FastAPI(
-    title="Video2Sale — Creative API",
-    version="0.3.0",
-    description="API para ranking de produtos, geração criativa e orquestração de vídeos",
+    title="Video2Sale",
+    version="1.0.0",
+    description="Produto → Vídeo TikTok em 1 chamada",
 )
 
+# CORS para frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(pipeline.router)
 app.include_router(products.router)
 app.include_router(videos.router)
 app.include_router(prompts.router)
@@ -17,4 +29,4 @@ app.include_router(trending.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "creative-api", "version": "0.1.0"}
+    return {"status": "ok", "service": "video2sale", "version": "1.0.0"}
