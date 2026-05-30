@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import (
     products, videos, prompts, stats, metrics, trending, pipeline,
@@ -41,3 +42,7 @@ app.include_router(storyboard.router)
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "video2sale", "version": "1.0.0"}
+
+
+# Servir vídeos/áudio/thumbnails gerados
+app.mount("/output", StaticFiles(directory="/output"), name="output")
