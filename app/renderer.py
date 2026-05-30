@@ -173,7 +173,24 @@ def _render_scene_no_image(
 
 
 def _download_image(url: str, dest_path: str) -> bool:
-    """Baixa imagem de URL para path local."""
+    """Baixa imagem de URL para path local. Usa cache em /data/shared/images/."""
+    import hashlib
+
+    # Cache: verificar se já existe
+    cache_dir = Path("/data/shared/images")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    url_hash = hashlib.md5(url.encode()).hexdigest()
+    ext = ".jpg"
+    if ".png" in url.lower():
+        ext = ".png"
+    elif ".webp" in url.lower():
+        ext = ".webp"
+    cache_path = cache_dir / f"{url_hash}{ext}"
+
+    if cache_path.exists() and cache_path.stat().st_size > 0:
+        shutil.copy2(str(cache_path), dest_path)
+        return True
+
     import httpx
     try:
         with httpx.Client(timeout=15, follow_redirects=True) as client:
@@ -181,6 +198,8 @@ def _download_image(url: str, dest_path: str) -> bool:
             if resp.status_code == 200:
                 with open(dest_path, "wb") as f:
                     f.write(resp.content)
+                # Salvar no cache
+                shutil.copy2(dest_path, str(cache_path))
                 return True
     except Exception as e:
         print(f"[DOWNLOAD] Failed {url}: {e}")
