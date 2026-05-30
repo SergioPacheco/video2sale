@@ -105,6 +105,22 @@ async function quickGenerate(id: number) {
   await loadProducts()
 }
 
+const importUrl = ref('')
+const importingUrl = ref(false)
+
+async function importFromUrl() {
+  if (!importUrl.value) return
+  importingUrl.value = true
+  try {
+    await api.post('/products/import-url', null, { params: { url: importUrl.value } })
+    importUrl.value = ''
+    await loadProducts()
+  } catch (e: any) {
+    alert(e.response?.data?.detail || 'Error al importar')
+  }
+  importingUrl.value = false
+}
+
 async function onUpload(event: any) {
   const file = event.files[0]
   const formData = new FormData()
@@ -124,6 +140,12 @@ onMounted(loadProducts)
         <FileUpload mode="basic" accept=".csv" :auto="true" @select="onUpload" chooseLabel="Importar CSV" />
         <Button label="Nuevo Producto" icon="pi pi-plus" @click="openNew" />
       </div>
+    </div>
+
+    <!-- Import por URL -->
+    <div class="flex gap-2 mb-4">
+      <InputText v-model="importUrl" placeholder="Pegar URL del producto (Amazon, AliExpress, TikTok Shop...)" class="flex-1" @keyup.enter="importFromUrl" />
+      <Button label="Importar URL" icon="pi pi-link" :loading="importingUrl" @click="importFromUrl" :disabled="!importUrl" />
     </div>
 
     <DataTable :value="products" :loading="loading" stripedRows paginator :rows="10">

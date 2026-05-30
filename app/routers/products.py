@@ -198,3 +198,33 @@ async def fetch_product_images(
         "added": len(new_assets),
         "assets": product.assets,
     }
+
+
+@router.post("/import-url", response_model=ProductOut, status_code=201)
+async def import_from_url(url: str, category: str = "General", db: Session = Depends(get_db)):
+    """Importa produto a partir de uma URL. Extrai nome, preço, imagem e descrição."""
+    from app.agents.product_scraper import scrape_product_url
+
+    data = await scrape_product_url(url)
+    if "error" in data:
+        raise HTTPException(status_code=400, detail=data["error"])
+
+    product = Product(
+        name=data.get("name") or "Produto importado",
+        category=category,
+        source="url_import",
+        product_url=url,
+        image_url=data.get("image_url"),
+        price=data.get("price"),
+        description=data.get("description"),
+        assets=[{"url": img, "type": "image", "source": "scraper"} for img in data.get("images", [])],
+    )
+    product.total_score = calculate_score({
+        "pain_score": 0, "visual_score": 5, "trend_score": 5,
+        "impulse_buy_score": 5, "demo_score": 0, "availability_score": 5,
+        "commission_estimate": 0, "competition_score": 5,
+    })
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
