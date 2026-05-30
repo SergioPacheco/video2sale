@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import (
     products, videos, prompts, stats, metrics, trending, pipeline,
-    integrations, presets, projects, assets, renders, publications, tiktok,
+    integrations, presets, projects, assets, renders, publications, tiktok, storyboard,
 )
 
 app = FastAPI(
@@ -35,6 +35,7 @@ app.include_router(assets.router)
 app.include_router(renders.router)
 app.include_router(publications.router)
 app.include_router(tiktok.router)
+app.include_router(storyboard.router)
 
 
 @app.get("/health")
