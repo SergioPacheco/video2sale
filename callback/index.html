@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>Video2Sale - Connecting TikTok...</title></head>
+<body>
+<p>Connecting to TikTok... Please wait.</p>
+<script>
+// Captura os params do TikTok e redireciona para o backend local
+const params = window.location.search;
+window.location.href = 'http://localhost:8090/tiktok/callback' + params;
+</script>
+</body>
+</html>
