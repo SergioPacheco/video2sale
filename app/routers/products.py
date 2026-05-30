@@ -160,3 +160,41 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     product.active = False
     db.commit()
     return {"status": "ok", "id": product_id}
+
+
+@router.post("/{product_id}/fetch-images")
+async def fetch_product_images(
+    product_id: int,
+    tiktok_video_ids: list[str] = [],
+    limit: int = 5,
+    db: Session = Depends(get_db),
+):
+    """Busca imagens para um produto: TikTok thumbnails + Bing fallback.
+
+    Salva em product.assets e retorna as imagens encontradas.
+    """
+    from app.agents.image_fetcher import fetch_images_for_product
+
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    images = await fetch_images_for_product(
+        product_name=product.name,
+        category=product.category or "",
+        tiktok_video_ids=tiktok_video_ids or [],
+        limit=limit,
+    )
+
+    # Mesclar com assets existentes (evitar duplicatas por URL)
+    existing_urls = {a.get("url") for a in (product.assets or [])}
+    new_assets = [img for img in images if img["url"] not in existing_urls]
+    product.assets = (product.assets or []) + new_assets
+    db.commit()
+
+    return {
+        "product_id": product_id,
+        "found": len(images),
+        "added": len(new_assets),
+        "assets": product.assets,
+    }

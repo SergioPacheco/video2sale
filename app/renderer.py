@@ -135,24 +135,35 @@ def _render_scene_no_image(
     text: str,
     duration: float,
     output_path: str,
-    bg_color: str = "0x0a0a0a",
+    scene_index: int = 0,
 ) -> None:
-    """Renderiza 1 cena sem imagem: fundo sólido + texto."""
+    """Renderiza 1 cena sem imagem: gradiente animado + texto."""
     escaped_text = _escape_text(text)
-    frames = int(duration * 30)
+
+    # Paletas de gradiente para TikTok (vibrantes)
+    gradients = [
+        ("0x1a1a2e", "0xe94560"),  # azul escuro → vermelho
+        ("0x0f3460", "0x533483"),  # azul → roxo
+        ("0x16213e", "0x0f3460"),  # azul profundo
+        ("0x1b1b2f", "0x162447"),  # escuro elegante
+        ("0x2d132c", "0xee4540"),  # vinho → vermelho
+    ]
+    c1, c2 = gradients[scene_index % len(gradients)]
 
     text_filter = ""
     if text.strip():
         text_filter = (
             f",drawtext=text='{escaped_text}'"
-            f":fontsize=56:fontcolor=white:borderw=3:bordercolor=black"
+            f":fontsize=58:fontcolor=white:borderw=4:bordercolor=black@0.8"
             f":x=(w-text_w)/2:y=(h-text_h)/2"
             f":enable='between(t,0.3,{duration - 0.3})'"
-            f":font='Noto Sans'"
+            f":font='Noto Sans Bold'"
         )
 
+    # Gradiente vertical animado com lavfi
     cmd = (
-        f'ffmpeg -y -f lavfi -i color=c={bg_color}:s=1080x1920:d={duration}:r=30 '
+        f'ffmpeg -y -f lavfi '
+        f'-i "gradients=s=1080x1920:c0={c1}:c2={c2}:x0=0:y0=0:x1=0:y1=1920:speed=0.3:d={duration}:r=30" '
         f'-vf "format=yuv420p{text_filter}" '
         f'-c:v libx264 -preset fast -pix_fmt yuv420p '
         f'"{output_path}"'
@@ -244,13 +255,12 @@ def render_video(
                     effect=effect,
                 )
             else:
-                # Sem imagens: fundo escuro com texto
-                colors = ["0x0a0a0a", "0x1a1a2e", "0x16213e", "0x0f3460", "0x1a0a2e"]
+                # Sem imagens: gradiente animado com texto
                 _render_scene_no_image(
                     text=text,
                     duration=duration,
                     output_path=scene_path,
-                    bg_color=colors[i % len(colors)],
+                    scene_index=i,
                 )
 
             scene_files.append(scene_path)

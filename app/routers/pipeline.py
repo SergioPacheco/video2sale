@@ -143,15 +143,28 @@ async def run_full_pipeline(
         else:
             steps.append({"step": "tts_skipped"})
 
-        # === 7. Render (ffmpeg) ===
+        # === 7. Buscar imagens se produto não tiver ===
         assets = product.assets or []
         image_urls = [a.get("url") for a in assets if a.get("type") in ("image", "photo", "producto", "lifestyle") and a.get("url")]
 
-        # Se não tem assets mas tem image_url no produto
         if not image_urls and product.image_url:
             image_urls = [product.image_url]
 
-        render_result = render_video(
+        if not image_urls:
+            from app.agents.image_fetcher import fetch_images_for_product
+            fetched = await fetch_images_for_product(
+                product_name=product.name,
+                category=product.category or "",
+                product_url=product.product_url or "",
+                limit=5,
+            )
+            if fetched:
+                product.assets = (product.assets or []) + fetched
+                db.flush()
+                image_urls = [img["url"] for img in fetched]
+                steps.append({"step": "images_fetched", "count": len(image_urls)})
+
+        # === 8. Render (ffmpeg) ===
             scenes=scenes,
             voiceover_path=voiceover_path,
             image_urls=image_urls,

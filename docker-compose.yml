@@ -20,7 +20,7 @@ services:
 
   # === API (FastAPI + ffmpeg) ===
   api:
-    build: ./services/creative-api
+    build: .
     container_name: v2s-api
     ports:
       - "8000:8000"
@@ -31,14 +31,14 @@ services:
     volumes:
       - ./data:/data
       - ./output:/output
-      - ./services/creative-api/app:/app/app
+      - ./app:/app/app
     depends_on:
       postgres:
         condition: service_healthy
 
   # === FRONTEND (Vue 3) ===
   frontend:
-    build: ./services/frontend
+    build: ./frontend
     container_name: v2s-frontend
     ports:
       - "3000:3000"
