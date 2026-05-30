@@ -13,6 +13,7 @@ const products = ref<any[]>([])
 const selectedProductId = ref<number | null>(null)
 const batchCount = ref(1)
 const selectedLanguage = ref('es-ES')
+const selectedEngine = ref('ffmpeg')
 const generating = ref(false)
 const result = ref<any>(null)
 const error = ref<string | null>(null)
@@ -26,6 +27,11 @@ const languages = [
   { label: '🇩🇪 Deutsch', value: 'de-DE' },
 ]
 
+const engines = [
+  { label: '🎬 FFmpeg (grátis)', value: 'ffmpeg' },
+  { label: '🤖 Seedance AI (~$1/vídeo)', value: 'seedance' },
+]
+
 // Actions
 async function generate() {
   generating.value = true
@@ -34,7 +40,7 @@ async function generate() {
   progress.value = ['Iniciando pipeline...']
 
   try {
-    const params: any = { language: selectedLanguage.value }
+    const params: any = { language: selectedLanguage.value, engine: selectedEngine.value }
     if (selectedProductId.value) params.product_id = selectedProductId.value
 
     if (batchCount.value > 1) {
@@ -127,6 +133,23 @@ onMounted(loadProducts)
             optionLabel="label"
             optionValue="value"
             class="w-48"
+          />
+        </div>
+      </div>
+
+      <!-- Cantidad -->
+      <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Engine</label>
+            <p class="text-xs text-gray-400">Motor de renderização</p>
+          </div>
+          <Select
+            v-model="selectedEngine"
+            :options="engines"
+            optionLabel="label"
+            optionValue="value"
+            class="w-56"
           />
         </div>
       </div>

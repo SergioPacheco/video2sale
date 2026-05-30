@@ -27,6 +27,7 @@ async def run_full_pipeline(
     product_id: int | None = None,
     week: str | None = None,
     language: str = "es-ES",
+    engine: str = "ffmpeg",
     db: Session = Depends(get_db),
 ):
     """Pipeline completo: produto → vídeo MP4 renderizado.
@@ -168,21 +169,34 @@ async def run_full_pipeline(
                 image_urls = [img["url"] for img in fetched]
                 steps.append({"step": "images_fetched", "count": len(image_urls)})
 
-        # === 8. Render (ffmpeg) ===
-        render_result = render_video(
-            scenes=scenes,
-            voiceover_path=voiceover_path,
-            image_urls=image_urls,
-            product_name=product.name,
-            week=week,
-            product_id=product.id,
-        )
+        # === 8. Render ===
+        if engine == "seedance":
+            from app.renderer_seedance import render_with_seedance
+            render_result = await render_with_seedance(
+                scenes=scenes,
+                image_urls=image_urls,
+                product_name=product.name,
+                week=week,
+                product_id=product.id,
+            )
+            video.video_path = render_result.video_path
+            video.thumbnail_path = None
+            video.renderer = "seedance"
+        else:
+            render_result = render_video(
+                scenes=scenes,
+                voiceover_path=voiceover_path,
+                image_urls=image_urls,
+                product_name=product.name,
+                week=week,
+                product_id=product.id,
+            )
+            video.video_path = render_result.video_path
+            video.thumbnail_path = render_result.thumbnail_path
+            video.renderer = "ffmpeg"
 
-        video.video_path = render_result.video_path
-        video.thumbnail_path = render_result.thumbnail_path
-        video.renderer = "ffmpeg"
         video.status = "rendered"
-        video.total_cost = float(video.total_cost or 0) + tts_cost + sum(p.cost or 0 for p in packs)
+        video.total_cost = float(video.total_cost or 0) + tts_cost + sum(p.cost or 0 for p in packs) + getattr(render_result, 'cost', 0)
 
         db.add(VideoEvent(video_id=video.id, event_type="video_rendered", actor="system",
                           details={"renderer": "ffmpeg", "duration": render_result.duration,

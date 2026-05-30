@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # Serper.dev (Google Search API — imagens)
     serper_api_key: str = ""
 
+    # Seedance (Volcengine Ark — AI video generation)
+    seedance_api_key: str = ""
+
     class Config:
         env_file = ".env"
 
