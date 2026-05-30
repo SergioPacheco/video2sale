@@ -76,9 +76,21 @@ async function loadStats() {
   stats.value = data
 }
 
+// === Integrations ===
+const integrations = ref<any[]>([])
+async function loadIntegrations() {
+  const { data } = await api.get('/integrations/')
+  integrations.value = data
+}
+
+function connectTiktok() {
+  window.open('/api/tiktok/login', '_self')
+}
+
 onMounted(async () => {
   await loadPrompts()
   await loadStats()
+  await loadIntegrations()
 })
 </script>
 
@@ -107,6 +119,22 @@ onMounted(async () => {
       <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
         <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ stats.cost?.toFixed(2) }}</p>
         <p class="text-xs text-gray-500">Coste total</p>
+      </div>
+    </div>
+
+    <!-- Conexões -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">🔌 Conexiones</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div v-for="integ in integrations" :key="integ.provider"
+             class="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+          <div>
+            <p class="font-medium text-sm capitalize">{{ integ.provider }}</p>
+            <Tag :value="integ.status" :severity="integ.status === 'connected' ? 'success' : 'secondary'" class="text-xs" />
+          </div>
+          <Button v-if="integ.provider === 'tiktok' && integ.status !== 'connected'"
+                  label="Conectar" size="small" @click="connectTiktok" />
+        </div>
       </div>
     </div>
 

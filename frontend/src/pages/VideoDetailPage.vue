@@ -15,11 +15,21 @@ const generating = ref(false)
 const videoId = computed(() => route.params.id)
 const selectedPack = computed(() => video.value?.creative_packs?.find((p: any) => p.selected))
 
+const storyboard = ref<any>(null)
+const generatingStoryboard = ref(false)
+
 async function loadVideo() {
   loading.value = true
   const { data } = await api.get(`/videos/${videoId.value}`)
   video.value = data
   loading.value = false
+}
+
+async function generateStoryboard() {
+  generatingStoryboard.value = true
+  const { data } = await api.post(`/storyboard/generate/${videoId.value}`, null, { params: { style: 'product_showcase' } })
+  storyboard.value = data
+  generatingStoryboard.value = false
 }
 
 async function generateCreative() {
@@ -102,6 +112,19 @@ onMounted(loadVideo)
       <Button v-if="video.status === 'human_selected'" label="Gerar Áudio" icon="pi pi-volume-up" @click="generateTTS" />
       <Button v-if="video.status === 'tts_generated'" label="Prompts Seedance" icon="pi pi-video" @click="generatePrompts('seedance')" />
       <Button v-if="video.status === 'tts_generated'" label="Prompts Runway" icon="pi pi-video" severity="secondary" @click="generatePrompts('runway')" />
+      <Button v-if="video.status === 'rendered' || video.selected_creative_pack_id" label="📋 Storyboard Seedance" icon="pi pi-file" :loading="generatingStoryboard" @click="generateStoryboard" severity="help" />
+      <Button v-if="video.status === 'rendered'" label="⬇️ Download Pack" icon="pi pi-download" @click="window.open(`/api/videos/${video.id}/download-pack`, '_blank')" severity="secondary" />
+    </div>
+
+    <!-- Storyboard Result -->
+    <div v-if="storyboard" class="mb-8 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-xl p-6">
+      <h3 class="text-lg font-semibold mb-3 text-purple-800 dark:text-purple-200">📋 Prompt para Seedance/Dreamina</h3>
+      <p class="text-xs text-purple-600 dark:text-purple-400 mb-3">Copie e cole no Seedance 2.0 (grátis no app)</p>
+      <pre class="bg-white dark:bg-gray-800 rounded-lg p-4 text-sm overflow-x-auto whitespace-pre-wrap border">{{ storyboard.full_prompt }}</pre>
+      <div class="mt-3 flex gap-2">
+        <Button label="Copiar Prompt" icon="pi pi-copy" size="small" @click="navigator.clipboard.writeText(storyboard.full_prompt)" />
+        <span class="text-xs text-purple-500 self-center">{{ storyboard.scenes }} cenas · {{ storyboard.images }} imagens</span>
+      </div>
     </div>
 
     <!-- Preview del Vídeo -->
