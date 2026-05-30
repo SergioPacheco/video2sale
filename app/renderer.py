@@ -106,6 +106,7 @@ def _render_scene_with_image(
     escaped_text = _escape_text(text)
     filters = [
         f"scale=2160:3840,{zoom_filter}",  # Escalar para 2x e depois zoompan reduz para 1080x1920
+        f"fade=t=in:d=0.3,fade=t=out:st={duration - 0.3}:d=0.3",  # Fade in/out
     ]
 
     # Adicionar texto se existir
@@ -268,7 +269,7 @@ def render_video(
         if not scene_files:
             raise RuntimeError("Nenhuma cena renderizada")
 
-        # 3. Concatenar cenas
+        # 3. Concatenar cenas com crossfade
         concat_file = os.path.join(tmp_dir, "concat.txt")
         with open(concat_file, "w") as f:
             for sf in scene_files:
