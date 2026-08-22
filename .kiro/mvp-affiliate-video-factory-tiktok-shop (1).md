@@ -1,3 +1,8 @@
+> **LEGADO - NÃO USAR COMO PLANO ATUAL.** Este documento registra uma exploração
+> anterior. O direcionamento canônico está em `.kiro/README.md`, no steering
+> `.kiro/steering/product-focus.md` e na spec
+> `.kiro/specs/internal-profit-engine/`.
+
 # MVP — Affiliate Video Factory Local
 
 ## Objetivo
