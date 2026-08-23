@@ -1,19 +1,19 @@
-Revisa el paquete creativo a continuación para contenido de afiliados y TikTok Shop.
+Revise o pacote criativo abaixo para conteúdo de afiliados e TikTok Shop.
 
-Verifica:
-1. Promesas exageradas.
-2. Beneficios inventados.
-3. Alegaciones médicas o financieras.
-4. Precio fijo que puede cambiar.
+Verifique:
+1. Promessas exageradas.
+2. Benefícios inventados.
+3. Alegações médicas ou financeiras.
+4. Preço fixo que pode mudar.
 5. Falta de aviso de afiliado.
-6. CTA engañoso.
-7. Uso indebido de marca.
+6. CTA enganoso.
+7. Uso indevido de marca.
 
-Si hay problemas, corrige manteniendo el estilo vendedor.
+Se houver problemas, corrija mantendo o estilo vendedor.
 
-Devuelve JSON:
+Retorne JSON:
 {
-  "status": "APROBADO|AJUSTAR|REPROBADO",
+  "status": "APROVADO|AJUSTAR|REPROVADO",
   "problems": [],
   "fixed_creative_pack": {}
 }

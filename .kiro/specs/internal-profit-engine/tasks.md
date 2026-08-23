@@ -3,12 +3,13 @@
 Cada fase deve terminar utilizável. Não iniciar a fase seguinte com testes
 vermelhos ou dois fluxos ativos para a mesma tarefa.
 
-## Fase 0 - Baseline e segurança
+## Fase 0 — Baseline e segurança
 
 - [ ] Criar branch de refatoração e tag do estado atual.
 - [ ] Documentar como iniciar o sistema atual e registrar falhas reproduzíveis.
 - [ ] Adicionar um smoke test do fluxo principal atual.
 - [ ] Introduzir Alembic e gerar baseline sem destruir o banco existente.
+- [ ] Declarar e implementar o fluxo gratuito como padrão no caminho principal.
 - [ ] Corrigir imediatamente o erro de `thumbnail_path` no Seedance enquanto o
       fluxo legado ainda estiver acessível.
 
@@ -18,6 +19,7 @@ vermelhos ou dois fluxos ativos para a mesma tarefa.
 
 - [ ] Retirar da navegação Dashboard, Trending, Settings genérico e ações de publicação.
 - [ ] Desabilitar batch, escolha automática de produto e renderização Seedance no frontend.
+- [ ] Remover Seedance do fluxo principal; manter apenas como legado fora do fluxo.
 - [ ] Marcar endpoints legados como deprecated na OpenAPI.
 - [ ] Criar feature flags somente se forem necessárias para preservar dados durante a transição.
 - [ ] Atualizar README para declarar ferramenta interna e novo fluxo.
@@ -91,4 +93,3 @@ vermelhos ou dois fluxos ativos para a mesma tarefa.
 
 Somente após esse gate avaliar TTS, renderização, importação de métricas,
 integração com provedor de vídeo ou publicação assistida.
-

@@ -21,7 +21,7 @@ LANGUAGE_NAMES = {
 }
 
 
-async def generate_creative_packs(product, video, custom_prompt=None, language: str = "es-ES") -> list[dict]:
+async def generate_creative_packs(product, video, custom_prompt=None, language: str = "pt-BR") -> list[dict]:
     """Gera 3 variações de roteiro para um produto."""
     if custom_prompt:
         # Substituir variáveis no template customizado
@@ -43,18 +43,18 @@ async def generate_creative_packs(product, video, custom_prompt=None, language: 
 
     lang_name = LANGUAGE_NAMES.get(language, language)
     user_prompt = (
-        f"Producto: {product.name}\n"
-        f"Categoría: {product.category}\n"
-        f"Descripción: {product.notes or product.name}\n"
-        f"Idioma del vídeo: {lang_name}\n"
-        f"IMPORTANTE: Todo el contenido (hook, voiceover, text, caption, hashtags) DEBE estar en {lang_name}.\n"
-        f"Público: Personas que buscan soluciones prácticas\n"
-        f"Dolor principal: Problema que resuelve este producto en el día a día\n"
-        f"Beneficios permitidos: Solo los que se pueden demostrar visualmente\n"
-        f"Restricciones: No inventar características, no prometer resultados imposibles\n\n"
-        f"Genera 3 variaciones diferentes del paquete creativo.\n"
-        f"Devuelve JSON con esta estructura exacta:\n"
-        f'{{"packs": [{{"hook": "texto del gancho", "scenes": [{{"start": 0, "end": 3, "text": "texto en pantalla", "voiceover": "narración", "visual": "descripción visual"}}], "caption": "texto para redes", "hashtags": ["tag1"], "affiliate_disclaimer": "aviso"}}]}}'
+        f"Produto: {product.name}\n"
+        f"Categoria: {product.category}\n"
+        f"Descrição: {product.notes or product.name}\n"
+        f"Idioma do vídeo: {lang_name}\n"
+        f"IMPORTANTE: Todo o conteúdo (hook, voiceover, text, caption, hashtags) DEVE estar em {lang_name}.\n"
+        f"Público: Pessoas que buscam soluções práticas\n"
+        f"Dor principal: Problema que este produto resolve no dia a dia\n"
+        f"Benefícios permitidos: Apenas os que podem ser demonstrados visualmente\n"
+        f"Restrições: Não inventar características, não prometer resultados impossíveis\n\n"
+        f"Gere 3 variações diferentes do pacote criativo.\n"
+        f"Retorne JSON com esta estrutura exata:\n"
+        f'{{"packs": [{{"hook": "texto do gancho", "scenes": [{{"start": 0, "end": 3, "text": "texto na tela", "voiceover": "narração", "visual": "descrição visual"}}], "caption": "texto para redes", "hashtags": ["tag1"], "affiliate_disclaimer": "aviso"}}]}}'
     )
 
     response = await _get_client().chat.completions.create(

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import httpx
 
 from app.database import get_db
-from app.models import Product, Video, VideoCreativePack, VideoEvent, WeeklyWinner
+from app.models import Product, Video, VideoCreativePack, VideoEvent, WeeklyWinner, Asset
 from app.schemas import (
     WeeklyWinnerRequest, WeeklyWinnerOut, VideoOut, VideoDetailOut, CreativePackOut,
 )
@@ -239,11 +239,11 @@ async def generate_tts(video_id: int, db: Session = Depends(get_db)):
     return {"status": "ok", "audio_path": result["audio_path"], "characters": len(full_text)}
 
 
-# === T09: Generate Prompts (Seedance/Runway) ===
+# === T09: Generate Prompts (video handoff) ===
 
 @router.post("/videos/{video_id}/generate-prompts")
-def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int | None = None, db: Session = Depends(get_db)):
-    """Gera prompts otimizados para o renderer escolhido. Aceita prompt_id para template customizado."""
+def generate_prompts(video_id: int, prompt_id: int | None = None, db: Session = Depends(get_db)):
+    """Gera prompts de vídeo genéricos para handoff local. Aceita prompt_id para template customizado."""
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video or not video.selected_creative_pack_id:
         raise HTTPException(status_code=400, detail="Selecione um creative pack primeiro")
@@ -276,20 +276,12 @@ def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int |
             ).replace(
                 "{{category}}", product.category
             )
-        elif renderer == "seedance":
+        else:
             prompt = (
                 f"{scene.get('visual', '')}. "
                 f"Vertical 9:16, realistic product video, {product.category.lower()}, "
                 f"clean background, natural lighting, TikTok style."
             )
-        elif renderer == "runway":
-            prompt = (
-                f"{scene.get('visual', '')}. "
-                f"Cinematic vertical shot, product demonstration, "
-                f"smooth camera movement, 4K quality."
-            )
-        else:
-            prompt = scene.get("visual", "")
 
         prompts.append({
             "scene": scene.get("start", 0),
@@ -298,17 +290,17 @@ def generate_prompts(video_id: int, renderer: str = "seedance", prompt_id: int |
             "text_overlay": scene.get("text", ""),
         })
 
-    video.renderer = renderer
+    video.renderer = "ffmpeg"
     video.status = "prompts_ready"
     if prompt_id:
         video.renderer_prompt_id = prompt_id
     db.add(VideoEvent(video_id=video_id, event_type="prompts_generated", actor="system",
-                      details={"renderer": renderer, "scenes": len(prompts), "prompt_id": prompt_id}))
+                      details={"renderer": "ffmpeg", "scenes": len(prompts), "prompt_id": prompt_id}))
     db.commit()
 
     return {
         "video_id": video_id,
-        "renderer": renderer,
+        "renderer": "ffmpeg",
         "product": product.name,
         "hook": pack.hook,
         "caption": pack.caption,
@@ -359,10 +351,14 @@ def download_pack(video_id: int, db: Session = Depends(get_db)):
         txt += f"\nCAPTION: {pack.caption}\nHASHTAGS: {' '.join(pack.hashtags or [])}\n"
         zf.writestr("roteiro.txt", txt)
 
-        if product.assets:
+        asset_rows = db.query(Asset).filter(
+            Asset.product_id == product.id,
+            Asset.active == True,
+        ).order_by(Asset.id.asc()).all()
+        if asset_rows:
             assets_txt = "MATERIALES DEL PRODUCTO\n\n"
-            for asset in product.assets:
-                assets_txt += f"[{asset.get('type','')}] {asset.get('label','')}\n  {asset.get('url','')}\n\n"
+            for asset in asset_rows:
+                assets_txt += f"[{asset.type}] {asset.label or ''}\n  {asset.url}\n\n"
             zf.writestr("assets.txt", assets_txt)
 
     buffer.seek(0)

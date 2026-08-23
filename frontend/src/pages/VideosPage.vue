@@ -46,7 +46,7 @@ function getProductName(productId: number) {
 
 function getProductImage(productId: number) {
   const product = products.value.find(p => p.id === productId)
-  return product?.image_url || product?.assets?.[0]?.url || null
+  return product?.image_url || null
 }
 
 function timeAgo(iso: string) {

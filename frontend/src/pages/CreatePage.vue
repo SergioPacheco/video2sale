@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
-import InputNumber from 'primevue/inputnumber'
 import api from '../services/api'
 
 const router = useRouter()
@@ -11,9 +10,7 @@ const router = useRouter()
 // State
 const products = ref<any[]>([])
 const selectedProductId = ref<number | null>(null)
-const batchCount = ref(1)
 const selectedLanguage = ref('es-ES')
-const selectedEngine = ref('ffmpeg')
 const generating = ref(false)
 const result = ref<any>(null)
 const error = ref<string | null>(null)
@@ -27,11 +24,6 @@ const languages = [
   { label: '🇩🇪 Deutsch', value: 'de-DE' },
 ]
 
-const engines = [
-  { label: '🎬 FFmpeg (grátis)', value: 'ffmpeg' },
-  { label: '🤖 Seedance AI (~$1/vídeo)', value: 'seedance' },
-]
-
 // Actions
 async function generate() {
   generating.value = true
@@ -40,30 +32,22 @@ async function generate() {
   progress.value = ['Iniciando pipeline...']
 
   try {
-    const params: any = { language: selectedLanguage.value, engine: selectedEngine.value }
+    const params: any = { language: selectedLanguage.value, engine: 'ffmpeg' }
     if (selectedProductId.value) params.product_id = selectedProductId.value
 
-    if (batchCount.value > 1) {
-      params.count = batchCount.value
-      progress.value.push(`Generando ${batchCount.value} vídeos...`)
-      const { data } = await api.post('/pipeline/batch', null, { params })
-      result.value = data
-      progress.value.push(`✅ ${data.completed}/${data.requested} vídeos generados`)
-    } else {
-      const { data } = await api.post('/pipeline/full', null, { params })
-      result.value = data
+    const { data } = await api.post('/pipeline/free', null, { params })
+    result.value = data
 
-      for (const step of data.steps || []) {
-        if (step.step === 'product') progress.value.push(`📦 ${step.name}`)
-        if (step.step === 'roteiro') progress.value.push(`✍️ ${step.packs} roteiros`)
-        if (step.step === 'compliance') progress.value.push('🛡️ Compliance OK')
-        if (step.step === 'pack_selected') progress.value.push(`🎯 "${step.hook}"`)
-        if (step.step === 'tts') progress.value.push(`🔊 ${step.characters} chars`)
-        if (step.step === 'rendered') progress.value.push(`🎬 ${step.duration?.toFixed(1)}s — listo!`)
-      }
-
-      if (data.status === 'ok') progress.value.push('✅ ¡Vídeo generado!')
+    for (const step of data.steps || []) {
+      if (step.step === 'product') progress.value.push(`📦 ${step.name}`)
+      if (step.step === 'roteiro') progress.value.push(`✍️ ${step.packs} roteiros`)
+      if (step.step === 'compliance') progress.value.push('🛡️ Compliance OK')
+      if (step.step === 'pack_selected') progress.value.push(`🎯 "${step.hook}"`)
+      if (step.step === 'tts') progress.value.push(`🔊 ${step.characters} chars`)
+      if (step.step === 'rendered') progress.value.push(`🎬 ${step.duration?.toFixed(1)}s — listo!`)
     }
+
+    if (data.status === 'ok') progress.value.push('✅ ¡Vídeo generado!')
   } catch (e: any) {
     const detail = e.response?.data?.detail
     if (typeof detail === 'object') {
@@ -137,38 +121,10 @@ onMounted(loadProducts)
         </div>
       </div>
 
-      <!-- Cantidad -->
-      <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Engine</label>
-            <p class="text-xs text-gray-400">Motor de renderização</p>
-          </div>
-          <Select
-            v-model="selectedEngine"
-            :options="engines"
-            optionLabel="label"
-            optionValue="value"
-            class="w-56"
-          />
-        </div>
-      </div>
-
-      <!-- Cantidad -->
-      <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cantidad</label>
-            <p class="text-xs text-gray-400">Top N productos por score</p>
-          </div>
-          <InputNumber v-model="batchCount" :min="1" :max="10" showButtons class="w-28" />
-        </div>
-      </div>
-
       <!-- Botão -->
       <div class="p-6 bg-gray-50 dark:bg-gray-800/50">
         <Button
-          :label="generating ? 'Generando...' : batchCount > 1 ? `🚀 Generar ${batchCount} Vídeos` : '🚀 Generar Vídeo'"
+          :label="generating ? 'Generando...' : '🚀 Generar Vídeo'"
           :loading="generating"
           @click="generate"
           class="w-full !text-lg !py-3"
@@ -228,7 +184,7 @@ onMounted(loadProducts)
 
     <!-- Stats -->
     <div class="mt-8 text-center text-xs text-gray-400">
-      {{ products.length }} productos disponibles · ffmpeg render · ~30s por vídeo
+      {{ products.length }} productos disponibles · ffmpeg gratuito · ~30s por vídeo
     </div>
   </div>
 </template>

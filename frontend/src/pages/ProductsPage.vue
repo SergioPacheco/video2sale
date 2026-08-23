@@ -23,12 +23,8 @@ const emptyForm = {
   commission_rate: null as number | null, seller_name: '', seller_url: '',
   accepts_affiliates: false,
   pain_score: 0, visual_score: 0, trend_score: 0, demo_score: 0, impulse_buy_score: 0,
-  assets: [] as { url: string; type: string; label: string }[],
 }
 const form = ref({ ...emptyForm })
-
-// Asset being added
-const newAsset = ref({ url: '', type: 'image', label: '' })
 
 async function loadProducts() {
   loading.value = true
@@ -38,25 +34,15 @@ async function loadProducts() {
 }
 
 function openNew() {
-  form.value = { ...emptyForm, assets: [] }
+  form.value = { ...emptyForm }
   editing.value = false
   dialogVisible.value = true
 }
 
 function openEdit(product: any) {
-  form.value = { ...product, assets: product.assets || [] }
+  form.value = { ...product }
   editing.value = true
   dialogVisible.value = true
-}
-
-function addAsset() {
-  if (!newAsset.value.url) return
-  form.value.assets.push({ ...newAsset.value })
-  newAsset.value = { url: '', type: 'image', label: '' }
-}
-
-function removeAsset(index: number) {
-  form.value.assets.splice(index, 1)
 }
 
 async function save() {
@@ -79,7 +65,6 @@ async function save() {
     trend_score: form.value.trend_score,
     demo_score: form.value.demo_score,
     impulse_buy_score: form.value.impulse_buy_score,
-    assets: form.value.assets,
   }
   if (editing.value) {
     await api.put(`/products/${form.value.id}`, payload)
@@ -101,7 +86,7 @@ async function fetchImages(id: number) {
 }
 
 async function quickGenerate(id: number) {
-  await api.post('/pipeline/full', null, { params: { product_id: id } })
+  await api.post('/pipeline/free', null, { params: { product_id: id } })
   await loadProducts()
 }
 
@@ -160,12 +145,6 @@ onMounted(loadProducts)
       <Column field="total_score" header="Score" sortable />
       <Column field="price" header="Precio" sortable>
         <template #body="{ data }">{{ data.price ? `€${data.price}` : '—' }}</template>
-      </Column>
-      <Column header="Assets">
-        <template #body="{ data }">
-          <Tag v-if="data.assets?.length" :value="`${data.assets.length} archivos`" severity="info" />
-          <span v-else class="text-gray-400 text-sm">—</span>
-        </template>
       </Column>
       <Column header="Afiliado" style="width: 5rem">
         <template #body="{ data }">
@@ -276,28 +255,6 @@ onMounted(loadProducts)
           <Textarea v-model="form.notes" rows="2" class="w-full" />
         </div>
 
-        <!-- Assets -->
-        <div>
-          <label class="block text-sm font-medium mb-2">📎 Materiales (imágenes, vídeos, links)</label>
-          <div class="space-y-2 mb-3">
-            <div v-for="(asset, i) in form.assets" :key="i" class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded p-2">
-              <Tag :value="asset.type" size="small" />
-              <a :href="asset.url" target="_blank" class="text-sm text-blue-600 truncate flex-1">{{ asset.label || asset.url }}</a>
-              <Button icon="pi pi-times" size="small" text severity="danger" @click="removeAsset(i)" />
-            </div>
-          </div>
-          <div class="flex gap-2">
-            <InputText v-model="newAsset.url" placeholder="URL del material" class="flex-1" />
-            <InputText v-model="newAsset.label" placeholder="Etiqueta" class="w-32" />
-            <select v-model="newAsset.type" class="border rounded px-2 py-1 text-sm">
-              <option value="image">Imagen</option>
-              <option value="video">Vídeo</option>
-              <option value="reference">Referencia</option>
-              <option value="music">Música</option>
-            </select>
-            <Button icon="pi pi-plus" size="small" @click="addAsset" />
-          </div>
-        </div>
       </div>
 
       <template #footer>

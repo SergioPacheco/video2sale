@@ -1,24 +1,25 @@
 # Video2Sale
 
-Producto → Vídeo TikTok en 1 clic. Pipeline automatizado para afiliados.
+Produto → Vídeo TikTok em 1 clique. Pipeline automatizado para afiliados.
 
-## Qué hace
+## O que faz
 
-1. **Descubrir** productos virales (catálogo, CSV, URL)
-2. **Generar** roteiro + narración + vídeo (GPT + TTS + ffmpeg)
-3. **Exportar** prompts para Seedance/Dreamina (gratis en el app)
-4. **Publicar** en TikTok (draft via API)
+1. **Descobrir** produtos virais (catálogo, CSV, URL)
+2. **Analisar** referências vencedoras (Creative DNA)
+3. **Gerar** roteiro + narração + vídeo (GPT + TTS + FFmpeg)
+4. **Validar** com Quality Gate antes de publicar
+5. **Publicar** no TikTok (draft via API)
 
 ## Stack
 
-| Componente | Tecnología |
+| Componente | Tecnologia |
 |---|---|
 | API | Python + FastAPI |
 | Frontend | Vue 3 + PrimeVue + Tailwind |
 | Banco | PostgreSQL 16 |
-| Render | ffmpeg (gratis) / Seedance 2.0 (pago) |
-| LLM | GPT-4.1-mini (~$0.005/vídeo) |
-| TTS | OpenAI TTS-1 (~$0.002/vídeo) |
+| Render | FFmpeg (grátis) / Remotion (animações) |
+| LLM | GPT-4o / GPT-4o-mini |
+| TTS | OpenAI TTS-1 |
 | Infra | Docker Compose |
 
 ## Setup
@@ -48,17 +49,33 @@ make up
 | API (FastAPI) | 8090 |
 | Frontend (Vue) | 3090 |
 
-## Uso rápido
+## Uso Rápido
+
+### Pipeline Novo (Creative Intelligence Engine)
+
+```bash
+# 1. Analisar produto
+curl -X POST "http://localhost:8090/creative/analyze-product/1"
+
+# 2. Gerar 5 planos criativos diferentes
+curl -X POST "http://localhost:8090/creative/plan/1" \
+  -H "Content-Type: application/json" \
+  -d '{"count": 5}'
+
+# 3. Gerar vídeo a partir de um plano
+curl -X POST "http://localhost:8090/creative/generate" \
+  -H "Content-Type: application/json" \
+  -d '{"plan": {...}}'
+```
+
+### Pipeline Simplificado
 
 ```bash
 # Gerar 1 vídeo (produto automático)
 make generate
 
 # Gerar com produto específico
-curl -X POST "http://localhost:8090/pipeline/full?product_id=1&language=es-ES"
-
-# Gerar storyboard para Seedance
-curl -X POST "http://localhost:8090/storyboard/generate/1?style=product_showcase"
+curl -X POST "http://localhost:8090/pipeline/free?product_id=1&language=pt-BR"
 
 # Health check
 make health
@@ -66,9 +83,9 @@ make health
 
 ## Idiomas suportados
 
-- 🇬🇧 English (en-US)
+- 🇧🇷 Português (pt-BR) — **padrão**
 - 🇪🇸 Español (es-ES)
-- 🇧🇷 Português (pt-BR)
+- 🇬🇧 English (en-US)
 - 🇫🇷 Français (fr-FR)
 - 🇩🇪 Deutsch (de-DE)
 
@@ -76,15 +93,15 @@ make health
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| POST | `/pipeline/full` | Pipeline completo: produto → vídeo |
-| POST | `/pipeline/batch` | Gerar N vídeos |
-| POST | `/storyboard/generate/{id}` | Prompts para Seedance |
+| POST | `/creative/analyze-product/{id}` | Analisa produto → ProductProfile |
+| POST | `/creative/analyze-reference` | Analisa vídeo → CreativeDNA |
+| POST | `/creative/plan/{id}` | Gera 5 CreativePlans diferentes |
+| POST | `/creative/generate` | Gera vídeo a partir de plan |
+| POST | `/pipeline/free` | Pipeline simplificado |
 | GET | `/products/` | Listar produtos |
 | POST | `/products/import-csv` | Importar CSV |
-| POST | `/products/import-url` | Importar de URL |
 | GET | `/videos` | Listar vídeos |
 | GET | `/videos/{id}` | Detalhe com roteiro |
-| GET | `/stats/` | KPIs do pipeline |
 
 Documentação completa: http://localhost:8090/docs
 
@@ -92,27 +109,40 @@ Documentação completa: http://localhost:8090/docs
 
 | Engine | Custo | Qualidade |
 |---|---|---|
-| ffmpeg | **$0.007** (só LLM + TTS) | Boa (Ken Burns + texto) |
-| Seedance | ~$3/vídeo | Excelente (IA generativa) |
+| FFmpeg | **~$0.01** (LLM + TTS) | Boa (Ken Burns + texto) |
+| Remotion | **~$0.01** | Boa (animações) |
+| Sora | ~$3/vídeo | Excelente (IA generativa) |
 
 ## Estrutura
 
 ```
 video2sale/
 ├── app/                    # API FastAPI
-│   ├── agents/             # LLM agents (script, compliance, ranker)
-│   ├── routers/            # 15 routers (45+ endpoints)
-│   ├── renderer.py         # ffmpeg video renderer
-│   ├── renderer_seedance.py # Seedance 2.0 API
+│   ├── creative/           # Creative Intelligence Engine
+│   │   ├── product_analyzer.py
+│   │   ├── reference_analyzer.py
+│   │   ├── planner.py
+│   │   ├── fidelity_validator.py
+│   │   └── quality_gate.py
+│   ├── openai/             # Serviços OpenAI
+│   │   ├── structured.py
+│   │   ├── vision.py
+│   │   ├── image.py
+│   │   ├── speech.py
+│   │   └── transcription.py
+│   ├── routers/            # Endpoints
+│   ├── renderer.py         # FFmpeg renderer
 │   └── tts.py              # OpenAI TTS
 ├── frontend/               # Vue 3 + PrimeVue
-│   └── src/pages/          # 7 páginas
+├── services/
+│   └── remotion-renderer/  # Remotion service
 ├── data/                   # Produtos, música, assets
 ├── output/                 # Vídeos gerados
+├── .kiro/                  # Documentação do projeto
 ├── docker-compose.yml
 └── init.sql                # Schema PostgreSQL
 ```
 
-## License
+## Licença
 
 MIT

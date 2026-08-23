@@ -3,14 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.routers import (
-    products, videos, prompts, stats, metrics, trending, pipeline,
-    integrations, presets, projects, assets, renders, publications, tiktok, storyboard,
+    products, videos, prompts, pipeline, assets, publications, tiktok,
 )
+from app.routers import creative
 
 app = FastAPI(
     title="Video2Sale",
-    version="1.0.0",
-    description="Produto → Vídeo TikTok em 1 chamada",
+    version="2.0.0",
+    description="Creative Intelligence Engine para TikTok Shop — Produto → Referências → Análise → Criativos → Vídeo",
 )
 
 # CORS para frontend
@@ -22,26 +22,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routers existentes
 app.include_router(pipeline.router)
 app.include_router(products.router)
 app.include_router(videos.router)
 app.include_router(prompts.router)
-app.include_router(stats.router)
-app.include_router(metrics.router)
-app.include_router(trending.router)
-app.include_router(integrations.router)
-app.include_router(presets.router)
-app.include_router(projects.router)
 app.include_router(assets.router)
-app.include_router(renders.router)
 app.include_router(publications.router)
 app.include_router(tiktok.router)
-app.include_router(storyboard.router)
+
+# Novo Creative Intelligence Engine
+app.include_router(creative.router)
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "video2sale", "version": "1.0.0"}
+    return {"status": "ok", "service": "video2sale", "version": "2.0.0"}
 
 
 # Servir vídeos/áudio/thumbnails gerados

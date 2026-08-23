@@ -8,6 +8,8 @@ de TikTok Shop, acumulando dados que permitam identificar produtos e ângulos
 criativos lucrativos.
 
 O sistema não será tratado como SaaS nem como plataforma de automação genérica.
+O caminho principal deve ser gratuito: usar assets reais, montagem local e
+renderização com FFmpeg; integração paga fica fora do fluxo padrão.
 
 ## 2. Persona
 
@@ -51,6 +53,7 @@ O operador deve escolher:
 - oferta/CTA a mencionar;
 - presença de pessoa, mãos ou somente produto;
 - restrições específicas, inclusive elementos que não podem ser alterados.
+- assets reais disponíveis para montagem;
 
 #### Aceitação
 
@@ -107,6 +110,7 @@ O sistema deve permitir copiar ou baixar:
 #### Aceitação
 
 - A exportação funciona sem integração com TikTok ou provedor de vídeo.
+- A exportação funciona sem integração com TikTok ou provedor de vídeo pago.
 - O pacote indica duração, proporção 9:16 e restrições de preservação.
 
 ### R6 - Registro de publicação e resultado
@@ -166,6 +170,7 @@ O sistema deve listar conteúdos por estado:
 - múltiplos idiomas;
 - multiusuário, SaaS, cobrança e permissões;
 - renderização paga integrada antes da validação do pacote criativo.
+- renderização paga integrada antes da validação do pacote criativo.
 
 ## 6. Critérios de validação do MVP
 
@@ -178,4 +183,4 @@ O MVP é considerado útil quando:
 - o operador consegue produzir conteúdo sem reescrever o prompt do zero;
 - custo, tempo e comissão são conhecidos por vídeo;
 - existe evidência de quais combinações de produto, hook e formato geram melhor lucro por hora.
-
+- o vídeo final pode ser gerado sem custo recorrente obrigatório.

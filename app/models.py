@@ -61,7 +61,7 @@ class GenerationPreset(Base):
     engine = Column(String, default="ffmpeg")
     template = Column(String, default="producto_destaque")
     voice = Column(String, default="nova")
-    language = Column(String, default="es-ES")
+    language = Column(String, default="pt-BR")
     target_duration = Column(Integer, default=30)
     music_mode = Column(String, default="auto")
     variations_count = Column(Integer, default=3)
@@ -140,7 +140,7 @@ class Product(Base):
     seller_name = Column(String)
     seller_url = Column(Text)
     accepts_affiliates = Column(Boolean, default=False)
-    assets = Column(JSONB, default=[])  # legado, usar tabela assets
+    assets = Column(JSONB, default=[])  # legado compatível; a fonte ativa é a tabela assets
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -265,7 +265,7 @@ class VideoRender(Base):
     engine = Column(String, nullable=False, default="ffmpeg")
     template = Column(String)
     voice = Column(String, default="nova")
-    language = Column(String, default="es-ES")
+    language = Column(String, default="pt-BR")
     target_duration = Column(Integer, default=30)
     music_track = Column(Text)
     video_path = Column(Text)

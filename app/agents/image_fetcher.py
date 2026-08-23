@@ -5,7 +5,7 @@ Estratégia (em ordem de prioridade):
 2. Extração da URL do produto (Amazon/TikTok Shop têm og:image acessível)
 3. TikTok oEmbed — thumbnails de vídeos da categoria
 
-Salva em product.assets como lista de {"url": str, "type": "image", "source": str}
+Retorna itens normalizados para persistência na tabela `assets`.
 """
 
 import re

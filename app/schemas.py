@@ -61,7 +61,7 @@ class PresetCreate(BaseModel):
     engine: str = "ffmpeg"
     template: str = "producto_destaque"
     voice: str = "nova"
-    language: str = "es-ES"
+    language: str = "pt-BR"
     target_duration: int = 30
     music_mode: str = "auto"
     variations_count: int = 3
@@ -124,7 +124,6 @@ class ProductBase(BaseModel):
     seller_name: str | None = None
     seller_url: str | None = None
     accepts_affiliates: bool = False
-    assets: list[dict] | None = []
 
 
 class ProductOut(ProductBase):
@@ -251,7 +250,7 @@ class RenderOut(BaseModel):
     engine: str
     template: str | None = None
     voice: str = "nova"
-    language: str = "es-ES"
+    language: str = "pt-BR"
     target_duration: int = 30
     video_path: str | None = None
     thumbnail_path: str | None = None

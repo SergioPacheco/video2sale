@@ -2,107 +2,130 @@
 inclusion: always
 ---
 
-# Direção de produto - lucro com TikTok Shop
+# Direção de produto — Creative Intelligence para TikTok Shop
 
 ## Missão
 
-O Video2Sale é uma ferramenta interna e single-user para ajudar seu proprietário
-a produzir, testar e aprender com vídeos de TikTok Shop que gerem comissão.
+O Video2Sale é uma ferramenta interna para gerar vídeos de TikTok Shop com
+máxima capacidade de conversão, usando:
 
-O objetivo principal não é vender o software. O objetivo é aumentar o lucro do
-operador com TikTok Shop.
+- Produtos reais com fotos e dados verificados
+- Referências de vídeos vencedores como fonte de padrões
+- OpenAI como motor principal de inteligência criativa
+- FFmpeg/Remotion para composição determinística
+- Aprendizado baseado em performance real (vendas/GMV/comissão)
+
+O objetivo não é vender o software. O objetivo é maximizar vendas no TikTok Shop.
 
 ## Métrica principal
 
-Otimizar **lucro por hora de produção**:
+**vendas / GMV / comissão gerada pelos vídeos**
 
-`(comissões atribuídas - custos variáveis de geração) / horas de trabalho`
+Enquanto não houver dados suficientes de vendas, usar nesta ordem:
 
-Enquanto ainda não houver comissão atribuída suficiente, usar estas métricas
-intermediárias, nesta ordem:
+1. vídeos publicados com Quality Gate aprovado
+2. CTR e retenção nos primeiros 2 segundos
+3. visualizações e engajamento
+4. custo por criativo aprovado
 
-1. vídeos efetivamente publicados por semana;
-2. tempo mediano entre cadastrar um produto e obter um pacote publicável;
-3. percentual de pacotes gerados que o operador decide publicar;
-4. visualizações, retenção inicial e cliques no produto;
-5. pedidos, comissão e lucro por vídeo/produto/ângulo criativo.
+## Core Loop
 
-Quantidade de endpoints, agentes, integrações ou vídeos gerados não é métrica de
-sucesso.
-
-## Fluxo essencial
-
-Toda alteração deve melhorar diretamente pelo menos uma etapa deste fluxo:
-
-1. registrar produto, fatos comprováveis, oferta e materiais reais;
-2. informar briefing e restrições criativas;
-3. gerar três conceitos realmente diferentes para 8 ou 16 segundos;
-4. revisar e editar antes de aprovar;
-5. exportar prompt, roteiro, fala, legenda e referências;
-6. produzir/publicar externamente;
-7. registrar URL e resultado econômico para aprender o que funciona.
+```
+PRODUTO REAL
+    ↓
+REFERÊNCIAS VENCEDORAS
+    ↓
+CREATIVE DNA (por que funciona?)
+    ↓
+PRODUCT PROFILE (o que vender?)
+    ↓
+CREATIVE PLAN (como vender?)
+    ↓
+ASSETS + VERIFICAÇÃO DE FIDELIDADE
+    ↓
+RENDER + QUALITY GATE
+    ↓
+PUBLICAÇÃO
+    ↓
+MÉTRICAS
+    ↓
+PRÓXIMA GERAÇÃO
+```
 
 ## Princípios obrigatórios
 
-- Preservar fielmente produto, pessoa e imagens de referência.
-- Não inventar características, preços, cupons ou resultados.
-- Priorizar dor -> solução, demonstração visual e gancho nos dois primeiros segundos.
-- Gerar espanhol natural da Espanha por padrão.
-- Fazer revisão humana antes de qualquer geração cara ou publicação.
-- Preferir entrada manual confiável a scraping frágil.
-- Preferir exportação para a ferramenta que já produz vídeo com qualidade a uma
-  integração prematura com provedores.
-- Implementar uma única jornada vertical completa antes de ampliar o sistema.
-- Toda feature nova precisa declarar qual métrica principal ou intermediária melhora.
+### Fidelidade do Produto (CRÍTICO)
+- Nunca redesenhar ou reinterpretar o produto
+- Preservar cor, forma, logo, bolsos, zíperes, alças, costuras
+- Não adicionar nem remover componentes
+- Validar automaticamente: original vs gerado
 
-## Escopo atual
+### Inteligência Criativa
+- Aprender COM vídeos vencedores, não COPIAR
+- Extrair estrutura, ritmo, mecanismo do hook, tipo de demonstração
+- Adaptar estratégia ao nosso produto
+- Hook é entidade de primeira classe (rastrear CTR por hook)
 
-Manter e simplificar:
+### OpenAI como motor principal
+- Usar Structured Outputs sempre (não regex em texto)
+- Centralizar modelos em configuração
+- Cachear análises caras (ProductProfile, CreativeDNA)
+- Usar modelo caro só quando melhora resultado
 
-- produtos e materiais de referência;
-- briefing criativo;
-- geração estruturada de conceitos, cenas, fala, legenda e CTA;
-- revisão/edição e aprovação humana;
-- exportação/cópia do pacote de produção;
-- histórico mínimo de conteúdos e resultados reais.
+### Qualidade antes de volume
+- Quality Gate obrigatório antes de publicação
+- Não publicar conteúdo genérico só porque JSON é válido
+- Cada vídeo deve ter hook específico, prova visual, CTA coerente
 
-## Escopo proibido até validação
+### Simplicidade arquitetural
+- 1 aplicação, 1 banco, 1 worker/job
+- FFmpeg para composição determinística
+- Remotion quando precisar de animação complexa
+- Sora/gpt-image quando precisar de geração
 
-Não implementar ou expandir sem evidência obtida após pelo menos 30 vídeos
-publicados e resultados registrados:
+## Fluxo de decisão para geração
 
-- SaaS, cadastro, login, multiusuário, cobrança ou planos;
-- publicação automática e OAuth do TikTok;
-- Amazon PA-API, scraping genérico e descoberta automática de produtos;
-- dashboard executivo, múltiplos projetos, presets genéricos ou administração de integrações;
-- geração em lote;
-- múltiplos idiomas além de `es-ES`;
-- múltiplos agentes LLM para tarefas que cabem em uma única geração estruturada;
-- Remotion, n8n ou microserviços;
-- renderização direta paga via Seedance/Runway/Kling;
-- seleção automática de “produto vencedor” com scores subjetivos;
-- funcionalidades de aparência profissional que não aumentem publicação, aprendizado ou lucro.
+```
+Cena precisa de geração?
+    ├─► NÃO → usar asset real do produto
+    │
+    └─► SIM → É movimento simples?
+              ├─► SIM → FFmpeg (zoom, pan, fade)
+              │
+              └─► NÃO → É composição com texto/efeitos?
+                        ├─► SIM → Remotion
+                        │
+                        └─► NÃO → É cena complexa de lifestyle?
+                                  └─► Sora/gpt-image
+```
 
-## Gate para nova feature
+## Escopo atual (MVP)
 
-Antes de implementar qualquer feature fora do fluxo essencial, responder:
+Implementar e validar:
 
-1. Qual problema observado em uso real ela resolve?
-2. Qual métrica deve melhorar?
-3. Qual é a solução manual atual e por que ela já não basta?
-4. Qual é a menor implementação testável?
-5. O que será removido ou adiado para compensar a complexidade adicionada?
+1. ProductAnalyzer → ProductProfile estruturado
+2. CompetitorVideoAnalyzer → CreativeDNA de referências
+3. CreativePlanner → 5 conceitos diferentes por produto
+4. ProductFidelityValidator → QA multimodal de assets
+5. VideoQualityGate → Technical + Creative QA
+6. Pipeline integrado com rastreabilidade
 
-Se as respostas não forem concretas, registrar a ideia no backlog e não implementar.
+## Escopo bloqueado até validação
+
+Não implementar até ter 30+ vídeos publicados com métricas:
+
+- Publicação automática TikTok (OAuth, upload)
+- Multi-idioma além de pt-BR
+- Dashboard de analytics
+- SaaS/multiusuário
+- Integrações com marketplaces
 
 ## Definição de pronto
 
-Uma mudança só está pronta quando:
+Uma mudança está pronta quando:
 
-- existe teste do comportamento crítico;
-- o fluxo pode ser executado do início ao fim;
-- erros são apresentados de forma acionável;
-- a documentação ativa corresponde ao código;
-- não adiciona um segundo caminho concorrente para a mesma tarefa;
-- produz um resultado que o operador consegue usar na criação/publicação real.
-
+- Usa Structured Outputs (não regex)
+- Preserva fidelidade do produto
+- Passa no Quality Gate
+- Tem rastreabilidade (qual referência inspirou qual criativo)
+- Produz resultado que pode ser publicado

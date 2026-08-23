@@ -12,7 +12,8 @@ Vue 3
       -> armazenamento local de referências/exportações
 ```
 
-Não haverá orquestrador, microserviços, fila, OAuth ou renderizador pago no MVP.
+O caminho principal não usará renderização paga. A montagem de vídeo será local
+e gratuita, baseada em assets reais, cortes simples e FFmpeg.
 
 ## 2. Único fluxo de aplicação
 
@@ -140,6 +141,7 @@ antes de existirem dados suficientes.
 ### Avaliar depois dos 30 vídeos
 
 - TTS automático;
+- TTS gratuito/local se houver ganho claro na velocidade de produção;
 - montagem FFmpeg;
 - importação automatizada de métricas;
 - integração direta com um provedor de vídeo;
@@ -165,4 +167,4 @@ antes de existirem dados suficientes.
 - exportação completa e reproduzível;
 - cálculo de lucro e lucro por hora;
 - teste end-to-end do cadastro à exportação.
-
+- teste end-to-end do cadastro à exportação com montagem gratuita.

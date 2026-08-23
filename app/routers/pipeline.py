@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Product, Video, VideoCreativePack, VideoEvent, PromptTemplate
+from app.models import Product, Asset, Video, VideoCreativePack, VideoEvent, PromptTemplate
 from app.agents.product_ranker import calculate_score
 from app.agents.script_agent import generate_creative_packs
 from app.agents.compliance_agent import check_compliance
@@ -19,14 +19,13 @@ from app.config import settings
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 
-SUPPORTED_LANGUAGES = ["en-US", "es-ES", "pt-BR", "fr-FR", "de-DE"]
+SUPPORTED_LANGUAGES = ["pt-BR", "es-ES", "en-US", "fr-FR", "de-DE"]
 
 
-@router.post("/full")
-async def run_full_pipeline(
+async def _run_free_pipeline(
     product_id: int | None = None,
     week: str | None = None,
-    language: str = "es-ES",
+    language: str = "pt-BR",
     engine: str = "ffmpeg",
     db: Session = Depends(get_db),
 ):
@@ -44,6 +43,12 @@ async def run_full_pipeline(
     if not week:
         now = datetime.now()
         week = f"{now.year}-W{now.isocalendar()[1]:02d}"
+
+    if engine != "ffmpeg":
+        raise HTTPException(
+            status_code=400,
+            detail="O fluxo principal gratuito aceita apenas engine=ffmpeg.",
+        )
 
     steps = []
     video = None
@@ -149,51 +154,34 @@ async def run_full_pipeline(
             steps.append({"step": "tts_skipped"})
 
         # === 7. Buscar imagens se produto não tiver ===
-        assets = product.assets or []
-        image_urls = [a.get("url") for a in assets if a.get("type") in ("image", "photo", "producto", "lifestyle") and a.get("url")]
+        asset_rows = db.query(Asset).filter(Asset.product_id == product.id, Asset.active == True).all()
+        image_urls = [
+            a.url for a in asset_rows
+            if a.type in ("image", "photo", "producto", "lifestyle") and a.url
+        ]
+        image_urls = list(dict.fromkeys(image_urls))
 
         if not image_urls and product.image_url:
             image_urls = [product.image_url]
 
         if not image_urls:
-            from app.agents.image_fetcher import fetch_images_for_product
-            fetched = await fetch_images_for_product(
-                product_name=product.name,
-                category=product.category or "",
-                product_url=product.product_url or "",
-                limit=5,
-            )
-            if fetched:
-                product.assets = (product.assets or []) + fetched
-                db.flush()
-                image_urls = [img["url"] for img in fetched]
-                steps.append({"step": "images_fetched", "count": len(image_urls)})
+            steps.append({
+                "step": "no_local_assets",
+                "message": "Produto sem mídia local; usando cenas gráficas de fallback.",
+            })
 
         # === 8. Render ===
-        if engine == "seedance":
-            from app.renderer_seedance import render_with_seedance
-            render_result = await render_with_seedance(
-                scenes=scenes,
-                image_urls=image_urls,
-                product_name=product.name,
-                week=week,
-                product_id=product.id,
-            )
-            video.video_path = render_result.video_path
-            video.thumbnail_path = None
-            video.renderer = "seedance"
-        else:
-            render_result = render_video(
-                scenes=scenes,
-                voiceover_path=voiceover_path,
-                image_urls=image_urls,
-                product_name=product.name,
-                week=week,
-                product_id=product.id,
-            )
-            video.video_path = render_result.video_path
-            video.thumbnail_path = render_result.thumbnail_path
-            video.renderer = "ffmpeg"
+        render_result = render_video(
+            scenes=scenes,
+            voiceover_path=voiceover_path,
+            image_urls=image_urls,
+            product_name=product.name,
+            week=week,
+            product_id=product.id,
+        )
+        video.video_path = render_result.video_path
+        video.thumbnail_path = render_result.thumbnail_path
+        video.renderer = "ffmpeg"
 
         video.status = "rendered"
         video.total_cost = float(video.total_cost or 0) + tts_cost + sum(p.cost or 0 for p in packs) + getattr(render_result, 'cost', 0)
@@ -238,34 +226,18 @@ async def run_full_pipeline(
         })
 
 
-@router.post("/batch")
-async def run_batch(
-    count: int = 3,
+@router.post("/free")
+async def run_free_pipeline(
+    product_id: int | None = None,
     week: str | None = None,
-    language: str = "es-ES",
+    language: str = "pt-BR",
     db: Session = Depends(get_db),
 ):
-    """Gera N vídeos para os top N produtos."""
-    if not week:
-        now = datetime.now()
-        week = f"{now.year}-W{now.isocalendar()[1]:02d}"
-
-    products = db.query(Product).filter(Product.active == True).order_by(Product.total_score.desc()).limit(count).all()
-    if not products:
-        raise HTTPException(status_code=404, detail="Nenhum produto ativo")
-
-    results = []
-    for product in products:
-        try:
-            r = await run_full_pipeline(product_id=product.id, week=week, language=language, db=db)
-            results.append(r)
-        except Exception as e:
-            results.append({"status": "error", "product_id": product.id, "error": str(e)})
-
-    return {
-        "week": week,
-        "requested": count,
-        "completed": sum(1 for r in results if r.get("status") == "ok"),
-        "total_cost": sum(r.get("total_cost", 0) for r in results),
-        "results": results,
-    }
+    """Fluxo principal gratuito: produto -> vídeo MP4 em FFmpeg."""
+    return await _run_free_pipeline(
+        product_id=product_id,
+        week=week,
+        language=language,
+        engine="ffmpeg",
+        db=db,
+    )

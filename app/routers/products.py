@@ -4,7 +4,7 @@ import pandas as pd
 import io
 
 from app.database import get_db
-from app.models import Product, ProductSearch
+from app.models import Product, ProductSearch, Asset
 from app.schemas import ProductOut, ProductBase, ProductImportResponse
 from app.agents.product_ranker import calculate_score
 
@@ -169,34 +169,36 @@ async def fetch_product_images(
     limit: int = 5,
     db: Session = Depends(get_db),
 ):
-    """Busca imagens para um produto: TikTok thumbnails + Bing fallback.
-
-    Salva em product.assets e retorna as imagens encontradas.
-    """
-    from app.agents.image_fetcher import fetch_images_for_product
+    """Retorna os assets locais já registrados para o produto."""
 
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
-    images = await fetch_images_for_product(
-        product_name=product.name,
-        category=product.category or "",
-        tiktok_video_ids=tiktok_video_ids or [],
-        limit=limit,
+    asset_rows = (
+        db.query(Asset)
+        .filter(Asset.product_id == product_id, Asset.active == True)
+        .order_by(Asset.id.asc())
+        .all()
     )
-
-    # Mesclar com assets existentes (evitar duplicatas por URL)
-    existing_urls = {a.get("url") for a in (product.assets or [])}
-    new_assets = [img for img in images if img["url"] not in existing_urls]
-    product.assets = (product.assets or []) + new_assets
-    db.commit()
+    assets = [
+        {
+            "id": asset.id,
+            "type": asset.type,
+            "url": asset.url,
+            "label": asset.label,
+            "source": asset.source,
+            "local_path": asset.local_path,
+        }
+        for asset in asset_rows
+        if asset.url
+    ]
 
     return {
         "product_id": product_id,
-        "found": len(images),
-        "added": len(new_assets),
-        "assets": product.assets,
+        "found": len(assets),
+        "added": 0,
+        "assets": assets,
     }
 
 
@@ -217,7 +219,6 @@ async def import_from_url(url: str, category: str = "General", db: Session = Dep
         image_url=data.get("image_url"),
         price=data.get("price"),
         description=data.get("description"),
-        assets=[{"url": img, "type": "image", "source": "scraper"} for img in data.get("images", [])],
     )
     product.total_score = calculate_score({
         "pain_score": 0, "visual_score": 5, "trend_score": 5,
@@ -225,6 +226,10 @@ async def import_from_url(url: str, category: str = "General", db: Session = Dep
         "commission_estimate": 0, "competition_score": 5,
     })
     db.add(product)
+    db.flush()
+    for img in data.get("images", []):
+        if img:
+            db.add(Asset(product_id=product.id, type="image", url=img, source="scraper"))
     db.commit()
     db.refresh(product)
     return product

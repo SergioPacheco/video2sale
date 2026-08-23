@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Video, Package, Flame, Settings, Moon, Sun, Clapperboard, LayoutDashboard } from 'lucide-vue-next'
+import { Video, Package, Moon, Sun, Clapperboard } from 'lucide-vue-next'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useRoute } from 'vue-router'
 
@@ -26,7 +26,7 @@ const route = useRoute()
         <RouterLink to="/"
           :class="['flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors', route.path === '/' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700']">
           <Clapperboard :size="20" />
-          <span class="hidden lg:inline">Dashboard</span>
+          <span class="hidden lg:inline">Produzir</span>
         </RouterLink>
 
         <RouterLink to="/create"
@@ -41,22 +41,10 @@ const route = useRoute()
           <span class="hidden lg:inline">Mis Vídeos</span>
         </RouterLink>
 
-        <RouterLink to="/trending"
-          :class="['flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors', route.path === '/trending' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700']">
-          <Flame :size="20" />
-          <span class="hidden lg:inline">Trending</span>
-        </RouterLink>
-
         <RouterLink to="/products"
           :class="['flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors', route.path === '/products' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700']">
           <Package :size="20" />
           <span class="hidden lg:inline">Productos</span>
-        </RouterLink>
-
-        <RouterLink to="/settings"
-          :class="['flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors', route.path === '/settings' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700']">
-          <Settings :size="20" />
-          <span class="hidden lg:inline">Configuración</span>
         </RouterLink>
       </nav>
 
